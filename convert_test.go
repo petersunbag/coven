@@ -7,13 +7,13 @@ import (
 )
 
 type User struct {
-	FirstName  string
+	FirstName  *string
 	LastName   string
 	Tags       []int
 	Age			int
 }
 type UserInfo struct {
-	FirstName  *string
+	FirstName  ***string
 	LastName   *string
 	Tags       []int
 	Age         int64
@@ -21,8 +21,9 @@ type UserInfo struct {
 
 
 func TestConvert_Convert(t *testing.T) {
+	name := "a"
 	u := User{
-		"a",
+		&name,
 		"b",
 		[]int{1,2,3},
 		18,
@@ -35,7 +36,7 @@ func TestConvert_Convert(t *testing.T) {
 	bytes, _ := json.Marshal(uinfo)
 	fmt.Println(string(bytes))
 
-	firstName := u.FirstName
+	firstName := &u.FirstName
 	uinfo2 := UserInfo{
 		&(firstName),
 		&u.LastName,
