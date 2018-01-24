@@ -5,7 +5,12 @@ import (
 	"reflect"
 )
 
-var createdConverters = make(map[string]*converter)
+type convertType struct {
+	srcTyp reflect.Type
+	dstTyp reflect.Type
+}
+
+var createdConverters = make(map[convertType]*converter)
 
 // converter stores convertible fields of srcTyp and dstTyp.
 // Field type of nested pointer is supported.
@@ -14,8 +19,7 @@ var createdConverters = make(map[string]*converter)
 // All methods in converter are thread-safe.
 // We can define a global variable to hold a converter and use it in any goroutine.
 type converter struct {
-	srcTyp          reflect.Type
-	dstTyp          reflect.Type
+	convertType
 	fieldConverters []*fieldConverter
 }
 
@@ -27,8 +31,9 @@ func NewConverter(src interface{}, dst interface{}) (c *converter) {
 	srcTyp := dereferencedType(reflect.TypeOf(src))
 	dstTyp := dereferencedType(reflect.TypeOf(dst))
 
-	key := srcTyp.String() + "-" + dstTyp.String()
-	if c, ok := createdConverters[key]; ok {
+	cTyp := convertType{srcTyp, dstTyp}
+
+	if c, ok := createdConverters[cTyp]; ok {
 		return c
 	}
 
@@ -54,11 +59,10 @@ func NewConverter(src interface{}, dst interface{}) (c *converter) {
 
 	if len(fCvts) > 0 {
 		c = &converter{
-			srcTyp,
-			dstTyp,
+			cTyp,
 			fCvts,
 		}
-		createdConverters[key] = c
+		createdConverters[cTyp] = c
 	}
 
 	return
