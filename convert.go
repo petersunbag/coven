@@ -1,4 +1,4 @@
-package struct_converter
+package converter
 
 import (
 	"fmt"
