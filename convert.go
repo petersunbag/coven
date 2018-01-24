@@ -5,6 +5,76 @@ import (
 	"reflect"
 )
 
+var createdConverters = make(map[string]*converter)
+
+type converter struct {
+	dstTyp          reflect.Type
+	srcTyp          reflect.Type
+	fieldConverters []*fieldConverter
+}
+
+func New(src interface{}, dst interface{}) (c *converter) {
+	srcTyp := dereferencedType(reflect.TypeOf(src))
+	dstTyp := dereferencedType(reflect.TypeOf(dst))
+
+	key := srcTyp.String() + "-" + dstTyp.String()
+	if c, ok := createdConverters[key]; ok {
+		return c
+	}
+
+	if srcTyp.Kind() != reflect.Struct {
+		panic("source is not a struct!")
+	}
+
+	if dstTyp.Kind() != reflect.Struct {
+		panic("target is not a struct!")
+	}
+
+	dFieldIndex := fieldIndex(dstTyp, []int{})
+	fCvts := make([]*fieldConverter, 0, len(dFieldIndex))
+	for _, index := range dFieldIndex {
+		df := dstTyp.FieldByIndex(index)
+		df.Index = index
+		if sf, ok := srcTyp.FieldByName(df.Name); ok {
+			if fCvt, ok := newFieldConverter(sf, df); ok {
+				fCvts = append(fCvts, fCvt)
+			}
+		}
+	}
+
+	if len(fCvts) > 0 {
+		c = &converter{
+			dstTyp,
+			srcTyp,
+			fCvts,
+		}
+		createdConverters[key] = c
+	}
+
+	return
+}
+
+func (c *converter) Convert(src interface{}, dst interface{}) {
+	dv := dereferencedValue(dst)
+	if !dv.CanSet() {
+		panic(fmt.Sprintf("target should be a pointer. [actual:%v]", dv.Type()))
+	}
+	if dv.Type() != c.dstTyp {
+		panic(fmt.Sprintf("invalid target type. [expected:%v] [actual:%v]", c.dstTyp, dv.Type()))
+	}
+
+	sv := dereferencedValue(src)
+	if sv.Type() != c.srcTyp {
+		panic(fmt.Sprintf("invalid source type. [expected:%v] [actual:%v]", c.srcTyp, sv.Type()))
+	}
+
+	for _, fCvt := range c.fieldConverters {
+		sf := sv.FieldByIndex(fCvt.sIndex)
+		df := dv.FieldByIndex(fCvt.dIndex)
+		fCvt.convert(sf, df)
+	}
+}
+
 type fieldConverter struct {
 	sTyp        reflect.Type
 	dTyp        reflect.Type
@@ -16,7 +86,7 @@ type fieldConverter struct {
 	dIndex      []int
 	sName       string
 	dName       string
-	structCvt   *Converter
+	structCvt   *converter
 	//dstOffset uintptr  //todo use unsafe.pointer instead of reflect.Value
 	//srcOffset uintptr
 }
@@ -49,9 +119,9 @@ func newFieldConverter(sf, df reflect.StructField) (f *fieldConverter, ok bool) 
 	if f.sDereferTyp.ConvertibleTo(f.dDereferTyp) {
 		ok = true
 	} else if f.sDereferTyp.Kind() == reflect.Struct && f.dDereferTyp.Kind() == reflect.Struct {
-		f.structCvt, ok = New(reflect.New(f.sDereferTyp).Interface(), reflect.New(f.dDereferTyp).Interface())
-		if !ok {
-			f.structCvt = nil
+		f.structCvt = New(reflect.New(f.sDereferTyp).Interface(), reflect.New(f.dDereferTyp).Interface())
+		if f.structCvt != nil {
+			ok = true
 		}
 	}
 
@@ -84,70 +154,6 @@ func (f *fieldConverter) convert(sv, dv reflect.Value) {
 	}
 
 	dv.Set(v)
-}
-
-type Converter struct {
-	dstTyp          reflect.Type
-	srcTyp          reflect.Type
-	fieldConverters []*fieldConverter
-}
-
-func New(src interface{}, dst interface{}) (c *Converter, ok bool) {
-	srcTyp := dereferencedType(reflect.TypeOf(src))
-	dstTyp := dereferencedType(reflect.TypeOf(dst))
-
-	if srcTyp.Kind() != reflect.Struct {
-		panic("source is not a struct!")
-	}
-
-	if dstTyp.Kind() != reflect.Struct {
-		panic("target is not a struct!")
-	}
-
-	dFieldIndex := fieldIndex(dstTyp, []int{})
-	fCvts := make([]*fieldConverter, 0, len(dFieldIndex))
-	for _, index := range dFieldIndex {
-		df := dstTyp.FieldByIndex(index)
-		df.Index = index
-		if sf, ok := srcTyp.FieldByName(df.Name); ok {
-			if fCvt, ok := newFieldConverter(sf, df); ok {
-				fCvts = append(fCvts, fCvt)
-			}
-		}
-	}
-
-	c = &Converter{
-		dstTyp,
-		srcTyp,
-		fCvts,
-	}
-
-	if len(fCvts) > 0 {
-		ok = true
-	}
-
-	return
-}
-
-func (c *Converter) Convert(src interface{}, dst interface{}) {
-	dv := dereferencedValue(dst)
-	if !dv.CanSet() {
-		panic(fmt.Sprintf("target should be a pointer. [actual:%v]", dv.Type()))
-	}
-	if dv.Type() != c.dstTyp {
-		panic(fmt.Sprintf("invalid target type. [expected:%v] [actual:%v]", c.dstTyp, dv.Type()))
-	}
-
-	sv := dereferencedValue(src)
-	if sv.Type() != c.srcTyp {
-		panic(fmt.Sprintf("invalid source type. [expected:%v] [actual:%v]", c.srcTyp, sv.Type()))
-	}
-
-	for _, fCvt := range c.fieldConverters {
-		sf := sv.FieldByIndex(fCvt.sIndex)
-		df := dv.FieldByIndex(fCvt.dIndex)
-		fCvt.convert(sf, df)
-	}
 }
 
 // DFS

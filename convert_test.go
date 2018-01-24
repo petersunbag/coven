@@ -21,7 +21,7 @@ func TestSimpleConvert(t *testing.T) {
 		D **int
 		E []int
 	}
-	c, _ := New(new(Foo), new(Bar))
+	c := New(new(Foo), new(Bar))
 
 	s := "b"
 	i := 2
@@ -65,8 +65,8 @@ func TestNestedConvert(t *testing.T) {
 		Foo Bar
 	}
 
-	c1, _ := New(new(FooBar), new(BarFoo))
-	c2, _ := New(new(BarFoo), new(FooBar))
+	c1 := New(new(FooBar), new(BarFoo))
+	c2 := New(new(BarFoo), new(FooBar))
 
 	barFoo := BarFoo{}
 
