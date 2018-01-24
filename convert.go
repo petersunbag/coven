@@ -1,82 +1,98 @@
 package struct_converter
 
 import (
+	"fmt"
 	"reflect"
 )
 
-type field struct {
-	sTyp reflect.Type
-	dTyp reflect.Type
+type fieldConverter struct {
+	sTyp        reflect.Type
+	dTyp        reflect.Type
 	sDereferTyp reflect.Type
 	dDereferTyp reflect.Type
-	sReferDeep	int
-	dReferDeep	int
-	//dstOffset uintptr  //todo 使用代码写死各种指针类型转换时使用
+	sReferDeep  int
+	dReferDeep  int
+	sIndex      []int
+	dIndex      []int
+	sName       string
+	dName       string
+	structCvt   *Converter
+	//dstOffset uintptr  //todo use unsafe.pointer instead of reflect.Value
 	//srcOffset uintptr
 }
 
-func newField(st, dt reflect.Type) (f *field, ok bool) {
-	var sReferDeep, dReferDeep int
-	sDereferTyp, dDereferTyp := st, dt
-	for k := sDereferTyp.Kind(); k==reflect.Ptr; k=sDereferTyp.Kind() {
-		sDereferTyp = sDereferTyp.Elem()
-		sReferDeep +=1
+func newFieldConverter(sf, df reflect.StructField) (f *fieldConverter, ok bool) {
+	f = &fieldConverter{
+		sTyp:        sf.Type,
+		dTyp:        df.Type,
+		sDereferTyp: sf.Type,
+		dDereferTyp: df.Type,
+		sReferDeep:  0,
+		dReferDeep:  0,
+		sIndex:      sf.Index,
+		dIndex:      df.Index,
+		sName:       sf.Name,
+		dName:       df.Name,
+		structCvt:   nil,
 	}
 
-	for k := dDereferTyp.Kind(); k==reflect.Ptr; k=dDereferTyp.Kind() {
-		dDereferTyp = dDereferTyp.Elem()
-		dReferDeep +=1
+	for k := f.sDereferTyp.Kind(); k == reflect.Ptr; k = f.sDereferTyp.Kind() {
+		f.sDereferTyp = f.sDereferTyp.Elem()
+		f.sReferDeep += 1
 	}
 
-	f = &field{
-		sTyp:st,
-		dTyp:dt,
-		sDereferTyp: sDereferTyp,
-		dDereferTyp: dDereferTyp,
-		sReferDeep:sReferDeep,
-		dReferDeep:dReferDeep,
+	for k := f.dDereferTyp.Kind(); k == reflect.Ptr; k = f.dDereferTyp.Kind() {
+		f.dDereferTyp = f.dDereferTyp.Elem()
+		f.dReferDeep += 1
 	}
-	if sDereferTyp.ConvertibleTo(dDereferTyp) {
+
+	if f.sDereferTyp.ConvertibleTo(f.dDereferTyp) {
 		ok = true
+	} else if f.sDereferTyp.Kind() == reflect.Struct && f.dDereferTyp.Kind() == reflect.Struct {
+		f.structCvt, ok = New(reflect.New(f.sDereferTyp).Interface(), reflect.New(f.dDereferTyp).Interface())
+		if !ok {
+			f.structCvt = nil
+		}
 	}
+
 	return
 }
 
-func (f *field) convert(sv, dv reflect.Value) {
-	if sv.Type() != f.sTyp {
-		panic("source field wrong type!")
-	}
-
-	if dv.Type() != f.dTyp {
-		panic("target field wrong type!")
-	}
-
+func (f *fieldConverter) convert(sv, dv reflect.Value) {
 	if sv.Kind() == reflect.Ptr && sv.IsNil() {
 		sv = reflect.New(f.sDereferTyp).Elem()
 	} else {
-		for d:=0; d<f.sReferDeep; d++ {
+		for d := 0; d < f.sReferDeep; d++ {
 			sv = sv.Elem()
 		}
 	}
-	v := sv.Convert(f.dDereferTyp)
 
-	for t,tmp,d:=f.dDereferTyp, reflect.New(f.dDereferTyp).Elem(), 0; d<f.dReferDeep; d++ {
+	var v reflect.Value
+	if f.structCvt == nil {
+		v = sv.Convert(f.dDereferTyp)
+	} else {
+		v = reflect.New(f.dDereferTyp)
+		f.structCvt.Convert(sv.Interface(), v.Interface())
+		v = v.Elem()
+	}
+
+	for t, d := f.dDereferTyp, 0; d < f.dReferDeep; d++ {
+		tmp := reflect.New(t).Elem()
 		tmp.Set(v)
 		v = tmp.Addr()
 		t = reflect.PtrTo(t)
-		tmp = reflect.New(t).Elem()
 	}
 
 	dv.Set(v)
 }
 
 type Converter struct {
-	dstTyp reflect.Type
-	srcTyp reflect.Type
-	fields map[string]*field
+	dstTyp          reflect.Type
+	srcTyp          reflect.Type
+	fieldConverters []*fieldConverter
 }
 
-func New(src interface{}, dst interface{}) *Converter {
+func New(src interface{}, dst interface{}) (c *Converter, ok bool) {
 	srcTyp := dereferencedType(reflect.TypeOf(src))
 	dstTyp := dereferencedType(reflect.TypeOf(dst))
 
@@ -88,44 +104,78 @@ func New(src interface{}, dst interface{}) *Converter {
 		panic("target is not a struct!")
 	}
 
-	fields := make(map[string]*field)
-	for i, n :=0, dstTyp.NumField();i<n;i++{
-		df := dstTyp.Field(i)
-		name := df.Name
-		if sf, ok := srcTyp.FieldByName(name); ok {
-			if field, ok := newField(sf.Type, df.Type); ok {
-				fields[name] = field
+	dFieldIndex := fieldIndex(dstTyp, []int{})
+	fCvts := make([]*fieldConverter, 0, len(dFieldIndex))
+	for _, index := range dFieldIndex {
+		df := dstTyp.FieldByIndex(index)
+		df.Index = index
+		if sf, ok := srcTyp.FieldByName(df.Name); ok {
+			if fCvt, ok := newFieldConverter(sf, df); ok {
+				fCvts = append(fCvts, fCvt)
 			}
 		}
 	}
 
-	return &Converter{
+	c = &Converter{
 		dstTyp,
 		srcTyp,
-		fields,
+		fCvts,
 	}
+
+	if len(fCvts) > 0 {
+		ok = true
+	}
+
+	return
 }
 
 func (c *Converter) Convert(src interface{}, dst interface{}) {
 	dv := dereferencedValue(dst)
 	if !dv.CanSet() {
-		panic("target should be a pointer!")
+		panic(fmt.Sprintf("target should be a pointer. [actual:%v]", dv.Type()))
 	}
-	sv := dereferencedValue(src)
-
-	if sv.Type() != c.srcTyp {
-		panic("source struct wrong type!")
-	}
-
 	if dv.Type() != c.dstTyp {
-		panic("target struct wrong type!")
+		panic(fmt.Sprintf("invalid target type. [expected:%v] [actual:%v]", c.dstTyp, dv.Type()))
 	}
 
-	for name, field := range c.fields {
-		df := dv.FieldByName(name)
-		sf := sv.FieldByName(name)
-		field.convert(sf, df)
+	sv := dereferencedValue(src)
+	if sv.Type() != c.srcTyp {
+		panic(fmt.Sprintf("invalid source type. [expected:%v] [actual:%v]", c.srcTyp, sv.Type()))
 	}
+
+	for _, fCvt := range c.fieldConverters {
+		sf := sv.FieldByIndex(fCvt.sIndex)
+		df := dv.FieldByIndex(fCvt.dIndex)
+		fCvt.convert(sf, df)
+	}
+}
+
+// DFS
+func fieldIndex(t reflect.Type, prefixIndex []int) (indices [][]int) {
+	t = dereferencedType(t)
+	fName := make(map[string]struct{})
+	var nextLevel [][][]int
+	for i, n := 0, t.NumField(); i < n; i++ {
+		indices = append(indices, append(prefixIndex, i))
+		f := t.Field(i)
+		fName[f.Name] = struct{}{}
+		if f.Anonymous {
+			nextLevel = append(nextLevel, fieldIndex(f.Type, []int{i}))
+		}
+	}
+
+	for _, nextIndices := range nextLevel {
+		for _, index := range nextIndices {
+			name := t.FieldByIndex(index).Name
+			if _, ok := fName[name]; ok {
+				continue
+			}
+			fName[name] = struct{}{}
+			indices = append(indices, append(prefixIndex, index...))
+		}
+	}
+
+	return
 }
 
 func dereferencedType(t reflect.Type) reflect.Type {
@@ -135,7 +185,6 @@ func dereferencedType(t reflect.Type) reflect.Type {
 
 	return t
 }
-
 
 func dereferencedValue(value interface{}) reflect.Value {
 	v := reflect.ValueOf(value)
