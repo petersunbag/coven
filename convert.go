@@ -7,13 +7,23 @@ import (
 
 var createdConverters = make(map[string]*converter)
 
+// converter stores convertible fields of srcTyp and dstTyp.
+// Field type of nested pointer is supported.
+// srcTyp and dstTyp are both dereferenced reflect.Type
+
+// All methods in converter are thread-safe.
+// We can define a global variable to hold a converter and use it in any goroutine.
 type converter struct {
-	dstTyp          reflect.Type
 	srcTyp          reflect.Type
+	dstTyp          reflect.Type
 	fieldConverters []*fieldConverter
 }
 
-func New(src interface{}, dst interface{}) (c *converter) {
+// NewConverter analyzes type information of src and dst
+// and returns a *converter with convertible fields of the same name.
+// Field type of nested pointer is supported.
+// It panics if src or dst is not a struct.
+func NewConverter(src interface{}, dst interface{}) (c *converter) {
 	srcTyp := dereferencedType(reflect.TypeOf(src))
 	dstTyp := dereferencedType(reflect.TypeOf(dst))
 
@@ -44,8 +54,8 @@ func New(src interface{}, dst interface{}) (c *converter) {
 
 	if len(fCvts) > 0 {
 		c = &converter{
-			dstTyp,
 			srcTyp,
+			dstTyp,
 			fCvts,
 		}
 		createdConverters[key] = c
@@ -54,11 +64,16 @@ func New(src interface{}, dst interface{}) (c *converter) {
 	return
 }
 
+// Convert creates field values converted from src and set them in dst on fields stored in converter.
+// Field type of nested pointer is supported.
+// dst should be a pointer to a struct, otherwise Convert panics.
+// dereferenced src and dst type should match their counterparts in converter.
 func (c *converter) Convert(src interface{}, dst interface{}) {
 	dv := dereferencedValue(dst)
 	if !dv.CanSet() {
 		panic(fmt.Sprintf("target should be a pointer. [actual:%v]", dv.Type()))
 	}
+
 	if dv.Type() != c.dstTyp {
 		panic(fmt.Sprintf("invalid target type. [expected:%v] [actual:%v]", c.dstTyp, dv.Type()))
 	}
@@ -75,6 +90,11 @@ func (c *converter) Convert(src interface{}, dst interface{}) {
 	}
 }
 
+// fieldConverter stores information of convertible field from one type to another.
+// sTyp and dTyp are original types of src and dst.
+// sDereferTyp and dDereferTyp are dereferenced types of src and dst.
+// sReferDeep and dReferDeep are levels of nested pointer of src and dst.
+// If src and dst are different struct, make them a converter.
 type fieldConverter struct {
 	sTyp        reflect.Type
 	dTyp        reflect.Type
@@ -91,6 +111,9 @@ type fieldConverter struct {
 	//srcOffset uintptr
 }
 
+// newFieldConverter analyzes information of src and dst field
+// and returns a *fieldConverter, if they are convertible, ok is true.
+// Field type of nested pointer is supported.
 func newFieldConverter(sf, df reflect.StructField) (f *fieldConverter, ok bool) {
 	f = &fieldConverter{
 		sTyp:        sf.Type,
@@ -119,7 +142,7 @@ func newFieldConverter(sf, df reflect.StructField) (f *fieldConverter, ok bool) 
 	if f.sDereferTyp.ConvertibleTo(f.dDereferTyp) {
 		ok = true
 	} else if f.sDereferTyp.Kind() == reflect.Struct && f.dDereferTyp.Kind() == reflect.Struct {
-		f.structCvt = New(reflect.New(f.sDereferTyp).Interface(), reflect.New(f.dDereferTyp).Interface())
+		f.structCvt = NewConverter(reflect.New(f.sDereferTyp).Interface(), reflect.New(f.dDereferTyp).Interface())
 		if f.structCvt != nil {
 			ok = true
 		}
@@ -128,6 +151,9 @@ func newFieldConverter(sf, df reflect.StructField) (f *fieldConverter, ok bool) 
 	return
 }
 
+// convert creates a value converted from src field and set it in dst field.
+// The new value is first created as type of dDereferTyp,
+// and then pointer nested for dReferDeep times to become a dTyp value.
 func (f *fieldConverter) convert(sv, dv reflect.Value) {
 	if sv.Kind() == reflect.Ptr && sv.IsNil() {
 		sv = reflect.New(f.sDereferTyp).Elem()
@@ -156,22 +182,23 @@ func (f *fieldConverter) convert(sv, dv reflect.Value) {
 	dv.Set(v)
 }
 
-// DFS
+// fieldIndex returns indices of every field in a struct, including nested anonymous fields.
+// Field has same name with upper level field is not returned.
 func fieldIndex(t reflect.Type, prefixIndex []int) (indices [][]int) {
 	t = dereferencedType(t)
 	fName := make(map[string]struct{})
-	var nextLevel [][][]int
+	anonymous := make([]int, 0, t.NumField())
 	for i, n := 0, t.NumField(); i < n; i++ {
 		indices = append(indices, append(prefixIndex, i))
 		f := t.Field(i)
 		fName[f.Name] = struct{}{}
 		if f.Anonymous {
-			nextLevel = append(nextLevel, fieldIndex(f.Type, []int{i}))
+			anonymous = append(anonymous, i)
 		}
 	}
 
-	for _, nextIndices := range nextLevel {
-		for _, index := range nextIndices {
+	for _, i := range anonymous {
+		for _, index := range fieldIndex(t.Field(i).Type, []int{i}) {
 			name := t.FieldByIndex(index).Name
 			if _, ok := fName[name]; ok {
 				continue

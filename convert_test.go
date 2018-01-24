@@ -21,7 +21,7 @@ func TestSimpleConvert(t *testing.T) {
 		D **int
 		E []int
 	}
-	c := New(new(Foo), new(Bar))
+	c := NewConverter(new(Foo), new(Bar))
 
 	s := "b"
 	i := 2
@@ -65,8 +65,8 @@ func TestNestedConvert(t *testing.T) {
 		Foo Bar
 	}
 
-	c1 := New(new(FooBar), new(BarFoo))
-	c2 := New(new(BarFoo), new(FooBar))
+	c1 := NewConverter(new(FooBar), new(BarFoo))
+	c2 := NewConverter(new(BarFoo), new(FooBar))
 
 	barFoo := BarFoo{}
 
@@ -106,12 +106,13 @@ func TestFieldIndex(t *testing.T) {
 	}
 	type foobar struct {
 		bar
-		C int
-		D int
+		C   int
+		D   int
+		foo foo
 	}
 
 	index := fieldIndex(reflect.TypeOf(foobar{}), []int{})
-	if expected := [][]int{{0}, {1}, {2}, {0, 0}, {0, 1}, {0, 0, 0}}; !reflect.DeepEqual(expected, index) {
+	if expected := [][]int{{0}, {1}, {2}, {3}, {0, 1}, {0, 0, 0}}; !reflect.DeepEqual(expected, index) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, index)
 	}
 }
