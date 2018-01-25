@@ -13,6 +13,7 @@ func TestSimpleConvert(t *testing.T) {
 		C *string
 		D *int
 		E []int
+		f int
 	}
 	type Bar struct {
 		A int
@@ -20,6 +21,7 @@ func TestSimpleConvert(t *testing.T) {
 		C string
 		D **int
 		E []int
+		f int64
 	}
 	c := NewConverter(new(Foo), new(Bar))
 
@@ -28,13 +30,13 @@ func TestSimpleConvert(t *testing.T) {
 
 	bar := Bar{}
 
-	foo := Foo{1, "a", &s, &i, []int{1, 2, 3}}
+	foo := Foo{1, "a", &s, &i, []int{1, 2, 3}, 4}
 	c.Convert(&foo, &bar)
 	if expected := `{"A":1,"B":"a","C":"b","D":2,"E":[1,2,3]}`; expected != jsonEncode(bar) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(bar))
 	}
 
-	foo2 := Foo{1, "a", nil, nil, nil}
+	foo2 := Foo{1, "a", nil, nil, nil, 5}
 	c.Convert(&foo2, &bar)
 	if expected := `{"A":1,"B":"a","C":"","D":0,"E":null}`; expected != jsonEncode(bar) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(bar))
@@ -112,7 +114,7 @@ func TestFieldIndex(t *testing.T) {
 	}
 
 	index := fieldIndex(reflect.TypeOf(foobar{}), []int{})
-	if expected := [][]int{{0}, {1}, {2}, {3}, {0, 1}, {0, 0, 0}}; !reflect.DeepEqual(expected, index) {
+	if expected := [][]int{{1}, {2}, {0, 1}, {0, 0, 0}}; !reflect.DeepEqual(expected, index) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, index)
 	}
 }

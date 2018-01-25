@@ -3,6 +3,7 @@ package converter
 import (
 	"fmt"
 	"reflect"
+	"unicode"
 )
 
 type convertType struct {
@@ -193,9 +194,13 @@ func fieldIndex(t reflect.Type, prefixIndex []int) (indices [][]int) {
 	fName := make(map[string]struct{})
 	anonymous := make([]int, 0, t.NumField())
 	for i, n := 0, t.NumField(); i < n; i++ {
-		indices = append(indices, append(prefixIndex, i))
 		f := t.Field(i)
-		fName[f.Name] = struct{}{}
+
+		if unicode.IsUpper(rune(f.Name[0])) {
+			indices = append(indices, append(prefixIndex, i))
+			fName[f.Name] = struct{}{}
+		}
+
 		if f.Anonymous {
 			anonymous = append(anonymous, i)
 		}
