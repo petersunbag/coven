@@ -3,6 +3,7 @@ package converter
 import (
 	"fmt"
 	"reflect"
+	"sync"
 	"unicode"
 )
 
@@ -11,7 +12,10 @@ type convertType struct {
 	dstTyp reflect.Type
 }
 
-var createdConverters = make(map[convertType]*converter)
+var (
+	createdConvertersMu sync.Mutex
+	createdConverters   = make(map[convertType]*converter)
+)
 
 // converter stores convertible fields of srcTyp and dstTyp.
 // Field type of nested pointer is supported.
@@ -29,11 +33,19 @@ type converter struct {
 // Field type of nested pointer is supported.
 // It panics if src or dst is not a struct.
 func NewConverter(src interface{}, dst interface{}) (c *converter) {
+	return newConverter(src, dst, true)
+}
+
+func newConverter(src interface{}, dst interface{}, lock bool) (c *converter) {
 	srcTyp := dereferencedType(reflect.TypeOf(src))
 	dstTyp := dereferencedType(reflect.TypeOf(dst))
 
 	cTyp := convertType{srcTyp, dstTyp}
 
+	if lock {
+		createdConvertersMu.Lock()
+		defer createdConvertersMu.Unlock()
+	}
 	if c, ok := createdConverters[cTyp]; ok {
 		return c
 	}
@@ -147,7 +159,7 @@ func newFieldConverter(sf, df reflect.StructField) (f *fieldConverter, ok bool) 
 	if f.sDereferTyp.ConvertibleTo(f.dDereferTyp) {
 		ok = true
 	} else if f.sDereferTyp.Kind() == reflect.Struct && f.dDereferTyp.Kind() == reflect.Struct {
-		f.structCvt = NewConverter(reflect.New(f.sDereferTyp).Interface(), reflect.New(f.dDereferTyp).Interface())
+		f.structCvt = newConverter(reflect.New(f.sDereferTyp).Interface(), reflect.New(f.dDereferTyp).Interface(), false)
 		if f.structCvt != nil {
 			ok = true
 		}
