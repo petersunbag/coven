@@ -32,11 +32,11 @@ type converter struct {
 // and returns a *converter with convertible fields of the same name.
 // Field type of nested pointer is supported.
 // It panics if src or dst is not a struct.
-func NewConverter(src interface{}, dst interface{}) (c *converter) {
-	return newConverter(src, dst, true)
+func NewConverter(dst interface{}, src interface{}) (c *converter) {
+	return newConverter(dst, src, true)
 }
 
-func newConverter(src interface{}, dst interface{}, lock bool) (c *converter) {
+func newConverter(dst interface{}, src interface{}, lock bool) (c *converter) {
 	srcTyp := dereferencedType(reflect.TypeOf(src))
 	dstTyp := dereferencedType(reflect.TypeOf(dst))
 
@@ -64,7 +64,7 @@ func newConverter(src interface{}, dst interface{}, lock bool) (c *converter) {
 		df := dstTyp.FieldByIndex(index)
 		df.Index = index
 		if sf, ok := srcTyp.FieldByName(df.Name); ok {
-			if fCvt, ok := newFieldConverter(sf, df); ok {
+			if fCvt, ok := newFieldConverter(df, sf); ok {
 				fCvts = append(fCvts, fCvt)
 			}
 		}
@@ -85,7 +85,7 @@ func newConverter(src interface{}, dst interface{}, lock bool) (c *converter) {
 // Field type of nested pointer is supported.
 // dst should be a pointer to a struct, otherwise Convert panics.
 // dereferenced src and dst type should match their counterparts in converter.
-func (c *converter) Convert(src interface{}, dst interface{}) {
+func (c *converter) Convert(dst interface{}, src interface{}) {
 	dv := dereferencedValue(dst)
 	if !dv.CanSet() {
 		panic(fmt.Sprintf("target should be a pointer. [actual:%v]", dv.Type()))
@@ -103,7 +103,7 @@ func (c *converter) Convert(src interface{}, dst interface{}) {
 	for _, fCvt := range c.fieldConverters {
 		sf := sv.FieldByIndex(fCvt.sIndex)
 		df := dv.FieldByIndex(fCvt.dIndex)
-		fCvt.convert(sf, df)
+		fCvt.convert(df, sf)
 	}
 }
 
@@ -131,7 +131,7 @@ type fieldConverter struct {
 // newFieldConverter analyzes information of src and dst field
 // and returns a *fieldConverter, if they are convertible, ok is true.
 // Field type of nested pointer is supported.
-func newFieldConverter(sf, df reflect.StructField) (f *fieldConverter, ok bool) {
+func newFieldConverter(df, sf reflect.StructField) (f *fieldConverter, ok bool) {
 	f = &fieldConverter{
 		sTyp:        sf.Type,
 		dTyp:        df.Type,
@@ -159,7 +159,7 @@ func newFieldConverter(sf, df reflect.StructField) (f *fieldConverter, ok bool) 
 	if f.sDereferTyp.ConvertibleTo(f.dDereferTyp) {
 		ok = true
 	} else if f.sDereferTyp.Kind() == reflect.Struct && f.dDereferTyp.Kind() == reflect.Struct {
-		f.structCvt = newConverter(reflect.New(f.sDereferTyp).Interface(), reflect.New(f.dDereferTyp).Interface(), false)
+		f.structCvt = newConverter(reflect.New(f.dDereferTyp).Interface(), reflect.New(f.sDereferTyp).Interface(), false)
 		if f.structCvt != nil {
 			ok = true
 		}
@@ -171,7 +171,7 @@ func newFieldConverter(sf, df reflect.StructField) (f *fieldConverter, ok bool) 
 // convert creates a value converted from src field and set it in dst field.
 // The new value is first created as type of dDereferTyp,
 // and then pointer nested for dReferDeep times to become a dTyp value.
-func (f *fieldConverter) convert(sv, dv reflect.Value) {
+func (f *fieldConverter) convert(dv, sv reflect.Value) {
 	if sv.Kind() == reflect.Ptr && sv.IsNil() {
 		sv = reflect.New(f.sDereferTyp).Elem()
 	} else {
@@ -185,7 +185,7 @@ func (f *fieldConverter) convert(sv, dv reflect.Value) {
 		v = sv.Convert(f.dDereferTyp)
 	} else {
 		v = reflect.New(f.dDereferTyp)
-		f.structCvt.Convert(sv.Interface(), v.Interface())
+		f.structCvt.Convert(v.Interface(), sv.Interface())
 		v = v.Elem()
 	}
 

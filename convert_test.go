@@ -23,7 +23,7 @@ func TestSimpleConvert(t *testing.T) {
 		E []int
 		f int64
 	}
-	c := NewConverter(new(Foo), new(Bar))
+	c := NewConverter(new(Bar), new(Foo))
 
 	s := "b"
 	i := 2
@@ -31,13 +31,13 @@ func TestSimpleConvert(t *testing.T) {
 	bar := Bar{}
 
 	foo := Foo{1, "a", &s, &i, []int{1, 2, 3}, 4}
-	c.Convert(&foo, &bar)
+	c.Convert(&bar, &foo)
 	if expected := `{"A":1,"B":"a","C":"b","D":2,"E":[1,2,3]}`; expected != jsonEncode(bar) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(bar))
 	}
 
 	foo2 := Foo{1, "a", nil, nil, nil, 5}
-	c.Convert(&foo2, &bar)
+	c.Convert(&bar, &foo2)
 	if expected := `{"A":1,"B":"a","C":"","D":0,"E":null}`; expected != jsonEncode(bar) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(bar))
 	}
@@ -67,29 +67,29 @@ func TestNestedConvert(t *testing.T) {
 		Foo Bar
 	}
 
-	c1 := NewConverter(new(FooBar), new(BarFoo))
-	c2 := NewConverter(new(BarFoo), new(FooBar))
+	c1 := NewConverter(new(BarFoo), new(FooBar))
+	c2 := NewConverter(new(FooBar), new(BarFoo))
 
 	barFoo := BarFoo{}
 
 	foobar := FooBar{10, &Foo{Baz{1, "b"}, "B", stringPtr("c")}}
-	c1.Convert(&foobar, &barFoo)
+	c1.Convert(&barFoo, &foobar)
 	if expected := `{"Foo":{"A":1,"B":"B","C":"c"}}`; expected != jsonEncode(barFoo) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(barFoo))
 	}
 
 	foobar = FooBar{}
-	c2.Convert(&barFoo, &foobar)
+	c2.Convert(&foobar, &barFoo)
 	if expected := `{"A":0,"B":"B","C":"c"}`; expected != jsonEncode(foobar) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(foobar))
 	}
 
 	foobar = FooBar{10, nil}
-	c1.Convert(&foobar, &barFoo)
+	c1.Convert(&barFoo, &foobar)
 	if expected := `{"Foo":{"A":0,"B":"","C":""}}`; expected != jsonEncode(barFoo) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(barFoo))
 	}
-	c2.Convert(&barFoo, &foobar)
+	c2.Convert(&foobar, &barFoo)
 	if expected := `{"A":10,"B":"","C":""}`; expected != jsonEncode(foobar) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(foobar))
 	}
