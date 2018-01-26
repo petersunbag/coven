@@ -1,10 +1,11 @@
-package converter
+package coven
 
 import (
 	"fmt"
 	"reflect"
 	"sync"
 	"unicode"
+	"unsafe"
 )
 
 type convertType struct {
@@ -101,9 +102,15 @@ func (c *converter) Convert(dst interface{}, src interface{}) {
 	}
 
 	for _, fCvt := range c.fieldConverters {
-		sf := sv.FieldByIndex(fCvt.sIndex)
-		df := dv.FieldByIndex(fCvt.dIndex)
-		fCvt.convert(df, sf)
+		if fCvt.cvtOp != nil {
+			dPtr := unsafe.Pointer(dv.UnsafeAddr() + fCvt.dOffset)
+			sPtr := unsafe.Pointer(sv.UnsafeAddr() + fCvt.sOffset)
+			fCvt.convertByPtr(dPtr, sPtr)
+		} else {
+			sf := sv.FieldByIndex(fCvt.sIndex)
+			df := dv.FieldByIndex(fCvt.dIndex)
+			fCvt.convert(df, sf)
+		}
 	}
 }
 
@@ -113,6 +120,8 @@ func (c *converter) Convert(dst interface{}, src interface{}) {
 // sReferDeep and dReferDeep are levels of nested pointer of src and dst.
 // If src and dst are different struct, make them a converter.
 type fieldConverter struct {
+	sOffset     uintptr
+	dOffset     uintptr
 	sTyp        reflect.Type
 	dTyp        reflect.Type
 	sDereferTyp reflect.Type
@@ -123,9 +132,8 @@ type fieldConverter struct {
 	dIndex      []int
 	sName       string
 	dName       string
+	cvtOp       cvtOp
 	structCvt   *converter
-	//dstOffset uintptr  //todo use unsafe.pointer instead of reflect.Value
-	//srcOffset uintptr
 }
 
 // newFieldConverter analyzes information of src and dst field
@@ -133,6 +141,8 @@ type fieldConverter struct {
 // Field type of nested pointer is supported.
 func newFieldConverter(df, sf reflect.StructField) (f *fieldConverter, ok bool) {
 	f = &fieldConverter{
+		sOffset:     sf.Offset,
+		dOffset:     df.Offset,
 		sTyp:        sf.Type,
 		dTyp:        df.Type,
 		sDereferTyp: sf.Type,
@@ -143,6 +153,7 @@ func newFieldConverter(df, sf reflect.StructField) (f *fieldConverter, ok bool) 
 		dIndex:      df.Index,
 		sName:       sf.Name,
 		dName:       df.Name,
+		cvtOp:       nil,
 		structCvt:   nil,
 	}
 
@@ -157,6 +168,8 @@ func newFieldConverter(df, sf reflect.StructField) (f *fieldConverter, ok bool) 
 	}
 
 	if f.sDereferTyp.ConvertibleTo(f.dDereferTyp) {
+		sk, dk := f.sDereferTyp.Kind(), f.dDereferTyp.Kind()
+		f.cvtOp = cvtOps[convertKind{sk, dk}]
 		ok = true
 	} else if f.sDereferTyp.Kind() == reflect.Struct && f.dDereferTyp.Kind() == reflect.Struct {
 		f.structCvt = newConverter(reflect.New(f.dDereferTyp).Interface(), reflect.New(f.sDereferTyp).Interface(), false)
@@ -185,7 +198,7 @@ func (f *fieldConverter) convert(dv, sv reflect.Value) {
 		v = sv.Convert(f.dDereferTyp)
 	} else {
 		v = reflect.New(f.dDereferTyp)
-		f.structCvt.Convert(v.Interface(), sv.Interface())
+		f.structCvt.Convert(v.Interface(), sv.Addr().Interface())
 		v = v.Elem()
 	}
 
@@ -197,6 +210,30 @@ func (f *fieldConverter) convert(dv, sv reflect.Value) {
 	}
 
 	dv.Set(v)
+}
+
+func (f *fieldConverter) convertByPtr(dPtr, sPtr unsafe.Pointer) {
+	if *((**int)(sPtr)) == nil {
+		sPtr = newValue(f.sDereferTyp.Kind())
+	} else {
+		for d := 0; d < f.sReferDeep; d++ {
+			sPtr = unsafe.Pointer(*((**int)(sPtr)))
+		}
+	}
+
+	if f.dReferDeep > 0 {
+		v := newValue(f.dDereferTyp.Kind())
+		f.cvtOp(sPtr, v)
+		for d := 0; d < f.dReferDeep; d++ {
+			tmp := v
+			v = unsafe.Pointer(&tmp)
+		}
+		*((*int)(dPtr)) = *(*int)(v)
+	} else {
+		sPtr := unsafe.Pointer(sPtr)
+		dPtr := unsafe.Pointer(dPtr)
+		f.cvtOp(sPtr, dPtr)
+	}
 }
 
 // fieldIndex returns indices of every field in a struct, including nested anonymous fields.
