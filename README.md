@@ -1,6 +1,6 @@
-# converter #
+# coven #
 
-copies and converts a source struct value to a target struct on convertible fields.
+copies and converts a source struct value to a target struct on convertible fields of the same name.
 nested anonymous fields are supported, but field has same name with upper level field is ignored.
 field type of nested pointer is supported.
 ## Install ##

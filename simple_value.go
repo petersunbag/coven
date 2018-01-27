@@ -952,125 +952,125 @@ func cvtStringString(sPtr unsafe.Pointer, dPtr unsafe.Pointer) {
 func newValue(k reflect.Kind) unsafe.Pointer {
 	switch k {
 	case reflect.Bool:
-		return newBool()
+		return newBoolPtr()
 	case reflect.Int:
-		return newInt()
+		return newIntPtr()
 	case reflect.Uint:
-		return newUint()
+		return newUintPtr()
 	case reflect.Int8:
-		return newInt8()
+		return newInt8Ptr()
 	case reflect.Uint8:
-		return newUint8()
+		return newUint8Ptr()
 	case reflect.Int16:
-		return newInt16()
+		return newInt16Ptr()
 	case reflect.Uint16:
-		return newUint16()
+		return newUint16Ptr()
 	case reflect.Int32:
-		return newInt32()
+		return newInt32Ptr()
 	case reflect.Uint32:
-		return newUint32()
+		return newUint32Ptr()
 	case reflect.Int64:
-		return newInt64()
+		return newInt64Ptr()
 	case reflect.Uint64:
-		return newUint64()
+		return newUint64Ptr()
 	case reflect.Float32:
-		return newFloat32()
+		return newFloat32Ptr()
 	case reflect.Float64:
-		return newFloat64()
+		return newFloat64Ptr()
 	case reflect.Complex64:
-		return newComplex64()
+		return newComplex64Ptr()
 	case reflect.Complex128:
-		return newComplex128()
+		return newComplex128Ptr()
 	case reflect.Uintptr:
-		return newUintptr()
+		return newUintptrPtr()
 	case reflect.String:
-		return newString()
+		return newStringPtr()
 	default:
 		return nil
 	}
 }
 
-func newBool() unsafe.Pointer {
+func newBoolPtr() unsafe.Pointer {
 	v := false
 	return unsafe.Pointer(&v)
 }
 
-func newInt() unsafe.Pointer {
+func newIntPtr() unsafe.Pointer {
 	v := 0
 	return unsafe.Pointer(&v)
 }
 
-func newUint() unsafe.Pointer {
+func newUintPtr() unsafe.Pointer {
 	v := 0
 	return unsafe.Pointer(&v)
 }
 
-func newInt8() unsafe.Pointer {
+func newInt8Ptr() unsafe.Pointer {
 	v := 0
 	return unsafe.Pointer(&v)
 }
 
-func newUint8() unsafe.Pointer {
+func newUint8Ptr() unsafe.Pointer {
 	v := 0
 	return unsafe.Pointer(&v)
 }
 
-func newInt16() unsafe.Pointer {
+func newInt16Ptr() unsafe.Pointer {
 	v := 0
 	return unsafe.Pointer(&v)
 }
 
-func newUint16() unsafe.Pointer {
+func newUint16Ptr() unsafe.Pointer {
 	v := 0
 	return unsafe.Pointer(&v)
 }
 
-func newInt32() unsafe.Pointer {
+func newInt32Ptr() unsafe.Pointer {
 	v := 0
 	return unsafe.Pointer(&v)
 }
 
-func newUint32() unsafe.Pointer {
+func newUint32Ptr() unsafe.Pointer {
 	v := 0
 	return unsafe.Pointer(&v)
 }
 
-func newInt64() unsafe.Pointer {
+func newInt64Ptr() unsafe.Pointer {
 	v := 0
 	return unsafe.Pointer(&v)
 }
 
-func newUint64() unsafe.Pointer {
+func newUint64Ptr() unsafe.Pointer {
 	v := 0
 	return unsafe.Pointer(&v)
 }
 
-func newFloat32() unsafe.Pointer {
+func newFloat32Ptr() unsafe.Pointer {
 	v := 0
 	return unsafe.Pointer(&v)
 }
 
-func newFloat64() unsafe.Pointer {
+func newFloat64Ptr() unsafe.Pointer {
 	v := 0
 	return unsafe.Pointer(&v)
 }
 
-func newComplex64() unsafe.Pointer {
+func newComplex64Ptr() unsafe.Pointer {
 	v := 0
 	return unsafe.Pointer(&v)
 }
 
-func newComplex128() unsafe.Pointer {
+func newComplex128Ptr() unsafe.Pointer {
 	v := 0
 	return unsafe.Pointer(&v)
 }
 
-func newUintptr() unsafe.Pointer {
+func newUintptrPtr() unsafe.Pointer {
 	v := 0
 	return unsafe.Pointer(&v)
 }
 
-func newString() unsafe.Pointer {
+func newStringPtr() unsafe.Pointer {
 	v := ""
 	return unsafe.Pointer(&v)
 }

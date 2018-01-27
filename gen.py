@@ -15,7 +15,7 @@ def addCvtOP(stype, dtype):
 
 def newT(type):
 	return \
-'''func new%(type)s() unsafe.Pointer {
+'''func new%(type)sPtr() unsafe.Pointer {
 	v := %(v)s
 	return unsafe.Pointer(&v)}
 
@@ -27,8 +27,8 @@ func newValue(k reflect.Kind) unsafe.Pointer {
 	switch k {'''
 	for t in typelist:
 		s += '''
-    case reflect.%(type)s:
-    	return new%(type)s()''' % {'type':str.capitalize(t)}
+	case reflect.%(type)s:
+		return new%(type)sPtr()''' % {'type':str.capitalize(t)}
 	s +='''
 	default:
 		return nil

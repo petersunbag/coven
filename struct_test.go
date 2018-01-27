@@ -20,20 +20,22 @@ func TestSimpleConvert(t *testing.T) {
 		B *string
 		C string
 		D **int
-		E []int
+		E []*int
 		f int64
 	}
-	c := NewConverter(new(Bar), new(Foo))
+
+	c := newStructConverter(&convertType{reflect.TypeOf(Bar{}), reflect.TypeOf(Foo{})})
 
 	s := "b"
 	i := 2
 
 	bar := Bar{}
+	bb := &bar
 
 	foo := Foo{1, "a", &s, &i, []int{1, 2, 3}, 4}
-	c.Convert(&bar, &foo)
-	if expected := `{"A":1,"B":"a","C":"b","D":2,"E":[1,2,3]}`; expected != jsonEncode(bar) {
-		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(bar))
+	c.Convert(&bb, &foo)
+	if expected := `{"A":1,"B":"a","C":"b","D":2,"E":[1,2,3]}`; expected != jsonEncode(bb) {
+		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(bb))
 	}
 
 	foo2 := Foo{1, "a", nil, nil, nil, 5}
@@ -67,8 +69,8 @@ func TestNestedConvert(t *testing.T) {
 		Foo Bar
 	}
 
-	c1 := NewConverter(new(BarFoo), new(FooBar))
-	c2 := NewConverter(new(FooBar), new(BarFoo))
+	c1 := newStructConverter(&convertType{reflect.TypeOf(BarFoo{}), reflect.TypeOf(FooBar{})})
+	c2 := newStructConverter(&convertType{reflect.TypeOf(FooBar{}), reflect.TypeOf(BarFoo{})})
 
 	barFoo := BarFoo{}
 
