@@ -16,7 +16,7 @@ func TestCache(t *testing.T) {
 	_ = NewConverter(new(foo), new(bar))
 	_ = NewConverter(new(foo), new(bar))
 
-	if len(createdConverters) != 1 {
+	if len(createdConverters) != 2 {
 		t.Fatalf("cache fail")
 	}
 }

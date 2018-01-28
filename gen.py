@@ -23,7 +23,7 @@ def newT(type):
 
 def new():
 	s = '''
-func newValue(k reflect.Kind) unsafe.Pointer {
+func newBasicValuePtr(k reflect.Kind) unsafe.Pointer {
 	switch k {'''
 	for t in typelist:
 		s += '''
@@ -115,5 +115,5 @@ s += '\n'
 
 s += new()
 
-with open('simple_value.go', 'w') as f:
+with open('basicPtrCvt.go', 'w') as f:
 	f.write(s)

@@ -949,7 +949,7 @@ func cvtStringString(sPtr unsafe.Pointer, dPtr unsafe.Pointer) {
 	*(*string)(dPtr) = (string)(*(*string)(sPtr))
 }
 
-func newValue(k reflect.Kind) unsafe.Pointer {
+func newBasicValuePtr(k reflect.Kind) unsafe.Pointer {
 	switch k {
 	case reflect.Bool:
 		return newBoolPtr()

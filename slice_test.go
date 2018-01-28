@@ -3,6 +3,7 @@ package coven
 import (
 	"reflect"
 	"testing"
+	"unsafe"
 )
 
 func TestSliceConverter_Convert(t *testing.T) {
@@ -19,7 +20,7 @@ func TestSliceConverter_Convert(t *testing.T) {
 	s := []foo{foo{1}, foo{2}, foo{3}}
 	d := make([]bar, 0)
 
-	c.Convert(&d, &s)
+	c.convert(unsafe.Pointer(dereferencedValue(&d).UnsafeAddr()), unsafe.Pointer(dereferencedValue(&s).UnsafeAddr()))
 
 	if expected := `[{"A":1},{"A":2},{"A":3}]`; !reflect.DeepEqual(expected, jsonEncode(d)) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(d))

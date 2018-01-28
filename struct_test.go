@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"reflect"
 	"testing"
+	"unsafe"
 )
 
 func TestSimpleConvert(t *testing.T) {
@@ -33,14 +34,14 @@ func TestSimpleConvert(t *testing.T) {
 	bb := &bar
 
 	foo := Foo{1, "a", &s, &i, []int{1, 2, 3}, 4}
-	c.Convert(&bb, &foo)
+	c.convert(unsafe.Pointer(dereferencedValue(&bb).UnsafeAddr()), unsafe.Pointer(dereferencedValue(&foo).UnsafeAddr()))
 	if expected := `{"A":1,"B":"a","C":"b","D":2,"E":[1,2,3]}`; expected != jsonEncode(bb) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(bb))
 	}
 
 	foo2 := Foo{1, "a", nil, nil, nil, 5}
-	c.Convert(&bar, &foo2)
-	if expected := `{"A":1,"B":"a","C":"","D":0,"E":null}`; expected != jsonEncode(bar) {
+	c.convert(unsafe.Pointer(dereferencedValue(&bar).UnsafeAddr()), unsafe.Pointer(dereferencedValue(&foo2).UnsafeAddr()))
+	if expected := `{"A":1,"B":"a","C":"","D":0,"E":[]}`; expected != jsonEncode(bar) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(bar))
 	}
 }
@@ -75,23 +76,23 @@ func TestNestedConvert(t *testing.T) {
 	barFoo := BarFoo{}
 
 	foobar := FooBar{10, &Foo{Baz{1, "b"}, "B", stringPtr("c")}}
-	c1.Convert(&barFoo, &foobar)
+	c1.convert(unsafe.Pointer(dereferencedValue(&barFoo).UnsafeAddr()), unsafe.Pointer(dereferencedValue(&foobar).UnsafeAddr()))
 	if expected := `{"Foo":{"A":1,"B":"B","C":"c"}}`; expected != jsonEncode(barFoo) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(barFoo))
 	}
 
 	foobar = FooBar{}
-	c2.Convert(&foobar, &barFoo)
+	c2.convert(unsafe.Pointer(dereferencedValue(&foobar).UnsafeAddr()), unsafe.Pointer(dereferencedValue(&barFoo).UnsafeAddr()))
 	if expected := `{"A":0,"B":"B","C":"c"}`; expected != jsonEncode(foobar) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(foobar))
 	}
 
 	foobar = FooBar{10, nil}
-	c1.Convert(&barFoo, &foobar)
+	c1.convert(unsafe.Pointer(dereferencedValue(&barFoo).UnsafeAddr()), unsafe.Pointer(dereferencedValue(&foobar).UnsafeAddr()))
 	if expected := `{"Foo":{"A":0,"B":"","C":""}}`; expected != jsonEncode(barFoo) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(barFoo))
 	}
-	c2.Convert(&foobar, &barFoo)
+	c2.convert(unsafe.Pointer(dereferencedValue(&foobar).UnsafeAddr()), unsafe.Pointer(dereferencedValue(&barFoo).UnsafeAddr()))
 	if expected := `{"A":10,"B":"","C":""}`; expected != jsonEncode(foobar) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(foobar))
 	}

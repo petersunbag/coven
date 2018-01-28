@@ -21,15 +21,12 @@ func newSliceConverter(convertType *convertType) converter {
 	return nil
 }
 
-func (s *sliceConverter) Convert(dst, src interface{}) {
-	dv := dereferencedValue(dst)
-	sv := dereferencedValue(src)
+//dv and sv must be dereferened value
+func (s *sliceConverter) convert(dPtr, sPtr unsafe.Pointer) {
+	dSlice := (*sliceHeader)(dPtr)
+	sSlice := (*sliceHeader)(sPtr)
 
-	dSlice := (*sliceHeader)(unsafe.Pointer(dv.UnsafeAddr()))
-	sSlice := (*sliceHeader)(unsafe.Pointer(sv.UnsafeAddr()))
-
-	dOffset, sOffset := uintptr(0), uintptr(0)
-	length := sv.Len()
+	length := sSlice.Len
 	dSlice.Len = length
 
 	if dSlice.Cap < length {
@@ -38,17 +35,11 @@ func (s *sliceConverter) Convert(dst, src interface{}) {
 		dSlice.Cap = length
 	}
 
-	for i := 0; i < length; i++ {
-		if s.elemConverter.cvtOp != nil {
-			dElemPtr := unsafe.Pointer(uintptr(dSlice.Data) + dOffset)
-			sElemPtr := unsafe.Pointer(uintptr(sSlice.Data) + sOffset)
-			s.elemConverter.convertByPtr(dElemPtr, sElemPtr)
-			dOffset += s.elemConverter.dDereferTyp.Size()
-			sOffset += s.elemConverter.sDereferTyp.Size()
-		} else {
-			sElemV := sv.Index(i)
-			dElemV := dv.Index(i)
-			s.elemConverter.convert(dElemV, sElemV)
-		}
+	for dOffset, sOffset, i := uintptr(0), uintptr(0), 0; i < length; i++ {
+		dElemPtr := unsafe.Pointer(uintptr(dSlice.Data) + dOffset)
+		sElemPtr := unsafe.Pointer(uintptr(sSlice.Data) + sOffset)
+		s.elemConverter.convert(dElemPtr, sElemPtr)
+		dOffset += s.elemConverter.dDereferSize
+		sOffset += s.elemConverter.sDereferSize
 	}
 }

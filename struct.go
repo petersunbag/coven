@@ -48,20 +48,13 @@ func newStructConverter(convertType *convertType) (c converter) {
 // Field type of nested pointer is supported.
 // dst should be a pointer to a struct, otherwise Convert panics.
 // dereferenced src and dst type should match their counterparts in structConverter.
-func (s *structConverter) Convert(dst, src interface{}) {
-	dv := dereferencedValue(dst)
-	sv := dereferencedValue(src)
 
+//dv and sv must be dereferened value
+func (s *structConverter) convert(dPtr, sPtr unsafe.Pointer) {
 	for _, fCvt := range s.fieldConverters {
-		if fCvt.cvtOp != nil {
-			dPtr := unsafe.Pointer(dv.UnsafeAddr() + fCvt.dOffset)
-			sPtr := unsafe.Pointer(sv.UnsafeAddr() + fCvt.sOffset)
-			fCvt.convertByPtr(dPtr, sPtr)
-		} else {
-			sf := sv.FieldByIndex(fCvt.sIndex)
-			df := dv.FieldByIndex(fCvt.dIndex)
-			fCvt.convert(df, sf)
-		}
+		dPtr := unsafe.Pointer(uintptr(dPtr) + fCvt.dOffset)
+		sPtr := unsafe.Pointer(uintptr(sPtr) + fCvt.sOffset)
+		fCvt.convert(dPtr, sPtr)
 	}
 }
 
