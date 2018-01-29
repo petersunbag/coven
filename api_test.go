@@ -24,25 +24,30 @@ func TestCache(t *testing.T) {
 }
 
 func TestDelegateConverter_Convert(t *testing.T) {
+	type foobar struct {
+		D int
+	}
 	type Foo struct {
 		A []int
 		B map[int64]string
 		C byte
+		foobar
 	}
 
 	type Bar struct {
 		A []*int
 		B map[string]*string
 		C *byte
+		D int64
 	}
 
 	c := NewConverter(Bar{}, Foo{})
 
-	foo := Foo{[]int{1, 2, 3}, map[int64]string{1: "a", 2: "b", 3: "c"}, 6}
+	foo := Foo{[]int{1, 2, 3}, map[int64]string{1: "a", 2: "b", 3: "c"}, 6, foobar{11}}
 	bar := Bar{}
 	c.Convert(&bar, &foo)
 
-	if expected := `{"A":[1,2,3],"B":{"1":"a","2":"b","3":"c"},"C":6}`; !reflect.DeepEqual(expected, jsonEncode(bar)) {
+	if expected := `{"A":[1,2,3],"B":{"1":"a","2":"b","3":"c"},"C":6,"D":11}`; !reflect.DeepEqual(expected, jsonEncode(bar)) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(bar))
 	}
 

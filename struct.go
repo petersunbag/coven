@@ -14,13 +14,12 @@ type structConverter struct {
 // NewStructConverter finds convertible fields of the same name in convertType,
 // and stores fieldConverters in structConverter, including nested anonymous fields.
 func newStructConverter(convertType *convertType) (c converter) {
-	dFieldIndex := fieldIndex(convertType.dstTyp, []int{})
+	_, sFields := extractFields(convertType.srcTyp, 0)
+	dFieldIndex, _ := extractFields(convertType.dstTyp, 0)
 	fieldConverters := make([]*fieldConverter, 0, len(dFieldIndex))
-	for _, index := range dFieldIndex {
-		df := convertType.dstTyp.FieldByIndex(index)
-		df.Index = index
-		if sf, ok := convertType.srcTyp.FieldByName(df.Name); ok {
-			if fieldConverter := newFieldConverter(df, sf); fieldConverter != nil {
+	for _, df := range dFieldIndex {
+		if sf, ok := sFields[df.Name]; ok {
+			if fieldConverter := newFieldConverter(*df, *sf); fieldConverter != nil {
 				fieldConverters = append(fieldConverters, fieldConverter)
 			}
 		}
@@ -51,8 +50,6 @@ type fieldConverter struct {
 	*elemConverter
 	sOffset uintptr
 	dOffset uintptr
-	sIndex  []int
-	dIndex  []int
 	sName   string
 	dName   string
 }
@@ -63,8 +60,6 @@ func newFieldConverter(df, sf reflect.StructField) (f *fieldConverter) {
 			elemConverter: elemConverter,
 			sOffset:       sf.Offset,
 			dOffset:       df.Offset,
-			sIndex:        sf.Index,
-			dIndex:        df.Index,
 			sName:         sf.Name,
 			dName:         df.Name,
 		}
@@ -73,33 +68,34 @@ func newFieldConverter(df, sf reflect.StructField) (f *fieldConverter) {
 	return nil
 }
 
-// fieldIndex returns indices of every field in a struct, including nested anonymous fields.
+// extractFields returns every exported field of a struct, including nested anonymous fields.
 // Field has same name with upper level field is not returned.
-func fieldIndex(t reflect.Type, prefixIndex []int) (indices [][]int) {
-	t = dereferencedType(t)
-	fName := make(map[string]struct{})
-	anonymous := make([]int, 0, t.NumField())
+func extractFields(t reflect.Type, offset uintptr) (fieldSlice []*reflect.StructField, fieldMap map[string]*reflect.StructField) {
+	fieldMap = make(map[string]*reflect.StructField)
+	anonymous := make([]*reflect.StructField, 0, t.NumField())
 	for i, n := 0, t.NumField(); i < n; i++ {
 		f := t.Field(i)
-
+		f.Offset = f.Offset + offset
 		if unicode.IsUpper(rune(f.Name[0])) {
-			indices = append(indices, append(prefixIndex, i))
-			fName[f.Name] = struct{}{}
+			fieldSlice = append(fieldSlice, &f)
+			fieldMap[f.Name] = &f
 		}
 
 		if f.Anonymous {
-			anonymous = append(anonymous, i)
+			anonymous = append(anonymous, &f)
 		}
 	}
 
-	for _, i := range anonymous {
-		for _, index := range fieldIndex(t.Field(i).Type, []int{i}) {
-			name := t.FieldByIndex(index).Name
-			if _, ok := fName[name]; ok {
+	for _, af := range anonymous {
+		afTyp := dereferencedType(af.Type)
+		s, _ := extractFields(afTyp, af.Offset)
+		for _, f := range s {
+			name := f.Name
+			if _, ok := fieldMap[name]; ok {
 				continue
 			}
-			fName[name] = struct{}{}
-			indices = append(indices, append(prefixIndex, index...))
+			fieldSlice = append(fieldSlice, f)
+			fieldMap[f.Name] = f
 		}
 	}
 

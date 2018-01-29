@@ -97,7 +97,7 @@ func TestNestedConvert(t *testing.T) {
 	}
 }
 
-func TestFieldIndex(t *testing.T) {
+func TestExtractFields(t *testing.T) {
 	type foo struct {
 		A int
 		B int
@@ -115,9 +115,23 @@ func TestFieldIndex(t *testing.T) {
 		foo foo
 	}
 
-	index := fieldIndex(reflect.TypeOf(foobar{}), []int{})
-	if expected := [][]int{{1}, {2}, {0, 1}, {0, 0, 0}}; !reflect.DeepEqual(expected, index) {
-		t.Fatalf("[expected:%v] [actual:%v]", expected, index)
+	align := unsafe.Alignof(1)
+
+	fs, fm := extractFields(reflect.TypeOf(foobar{}), 0)
+	if len(fs) != 4 {
+		t.Fatalf("[expected:%v] [actual:%v]", 4, jsonEncode(fs))
+	}
+	if fm["A"].Offset != 0 {
+		t.Fatalf("[expected:%v] [actual:%v]", 0, fm["A"].Offset)
+	}
+	if fm["B"].Offset != 3*align {
+		t.Fatalf("[expected:%v] [actual:%v]", 0, fm["B"].Offset)
+	}
+	if fm["C"].Offset != 5*align {
+		t.Fatalf("[expected:%v] [actual:%v]", 0, fm["C"].Offset)
+	}
+	if fm["D"].Offset != 6*align {
+		t.Fatalf("[expected:%v] [actual:%v]", 0, fm["D"].Offset)
 	}
 }
 
