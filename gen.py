@@ -1,13 +1,19 @@
-tempelate = '''
-func %(methodname)s(sPtr unsafe.Pointer, dPtr unsafe.Pointer) {
-	*(*%(dtype)s)(dPtr) = (%(dtype)s)(*(*%(stype)s)(sPtr))
-}
-'''
-
 def methodname(stype, dtype):
 	return "cvt" + str.capitalize(stype) + str.capitalize(dtype)
 
 def method(stype, dtype):
+	if dtype == 'string':
+		tempelate = '''
+func %(methodname)s(sPtr unsafe.Pointer, dPtr unsafe.Pointer) {
+	*(*%(dtype)s)(dPtr) = fmt.Sprintf("%%v", *(*%(stype)s)(sPtr))
+}
+'''
+	else:
+		tempelate = '''
+func %(methodname)s(sPtr unsafe.Pointer, dPtr unsafe.Pointer) {
+	*(*%(dtype)s)(dPtr) = (%(dtype)s)(*(*%(stype)s)(sPtr))
+}
+'''
 	return tempelate % {'methodname': methodname(stype, dtype), 'stype':stype,'dtype':dtype}
 
 def addCvtOP(stype, dtype):
@@ -77,7 +83,7 @@ defaultvalue = {
 	'complex64': '0',
 	'complex128': '0',
 	'uintptr': '0',
-	'string': '''""''',
+	'string': '""',
 }
 
 s = \
@@ -88,6 +94,7 @@ s = \
 import (
 	"unsafe"
 	"reflect"
+	"fmt"
 )
 
 type convertKind struct {

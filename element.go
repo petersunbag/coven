@@ -34,7 +34,8 @@ func newElemConverter(dt, st reflect.Type) (e *elemConverter, ok bool) {
 	e.sDereferSize = e.sDereferTyp.Size()
 	e.dDereferSize = e.dDereferTyp.Size()
 
-	if e.converter = newConverter(e.dDereferTyp, e.sDereferTyp, false); e.converter != nil {
+	if converter := newConverter(e.dDereferTyp, e.sDereferTyp, false); converter != nil {
+		e.converter = converter
 		e.sEmptyDereferValPtr = newValuePtr(e.sDereferTyp)
 		ok = true
 	}
@@ -58,7 +59,7 @@ func (e *elemConverter) convert(dPtr, sPtr unsafe.Pointer) {
 			tmp := v
 			v = unsafe.Pointer(&tmp)
 		}
-		*((*int)(dPtr)) = *(*int)(v)
+		*(**int)(dPtr) = *(**int)(v)
 	} else {
 		e.converter.convert(dPtr, sPtr)
 	}

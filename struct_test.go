@@ -1,7 +1,6 @@
 package coven
 
 import (
-	"encoding/json"
 	"reflect"
 	"testing"
 	"unsafe"
@@ -120,11 +119,6 @@ func TestFieldIndex(t *testing.T) {
 	if expected := [][]int{{1}, {2}, {0, 1}, {0, 0, 0}}; !reflect.DeepEqual(expected, index) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, index)
 	}
-}
-
-func jsonEncode(s interface{}) string {
-	bytes, _ := json.Marshal(s)
-	return string(bytes)
 }
 
 func stringPtr(s string) *string {

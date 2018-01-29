@@ -83,12 +83,18 @@ func newConverter(dstTyp, srcTyp reflect.Type, lock bool) *delegateConverter {
 		case sk == reflect.Slice && dk == reflect.Slice:
 			c = newSliceConverter(cTyp)
 
+		case sk == reflect.Map && dk == reflect.Map:
+			c = newMapConverter(cTyp)
+
 		default:
 			return nil
 		}
 	}
+	if c != nil {
+		dc := &delegateConverter{cTyp, c}
+		createdConverters[*cTyp] = dc
+		return dc
+	}
 
-	dc := &delegateConverter{cTyp, c}
-	createdConverters[*cTyp] = dc
-	return dc
+	return nil
 }

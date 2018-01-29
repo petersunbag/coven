@@ -18,7 +18,9 @@ func TestSliceConverter_Convert(t *testing.T) {
 	c := newSliceConverter(&convertType{reflect.TypeOf([]bar{}), reflect.TypeOf([]foo{})})
 
 	s := []foo{foo{1}, foo{2}, foo{3}}
+
 	d := make([]bar, 0)
+	d = nil
 
 	c.convert(unsafe.Pointer(dereferencedValue(&d).UnsafeAddr()), unsafe.Pointer(dereferencedValue(&s).UnsafeAddr()))
 

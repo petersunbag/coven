@@ -23,21 +23,21 @@ type structConverter struct {
 // It panics if src or dst is not a struct.
 func newStructConverter(convertType *convertType) (c converter) {
 	dFieldIndex := fieldIndex(convertType.dstTyp, []int{})
-	fCvts := make([]*fieldConverter, 0, len(dFieldIndex))
+	fieldConverters := make([]*fieldConverter, 0, len(dFieldIndex))
 	for _, index := range dFieldIndex {
 		df := convertType.dstTyp.FieldByIndex(index)
 		df.Index = index
 		if sf, ok := convertType.srcTyp.FieldByName(df.Name); ok {
-			if fCvt := newFieldConverter(df, sf); fCvt != nil {
-				fCvts = append(fCvts, fCvt)
+			if fieldConverter := newFieldConverter(df, sf); fieldConverter != nil {
+				fieldConverters = append(fieldConverters, fieldConverter)
 			}
 		}
 	}
 
-	if len(fCvts) > 0 {
+	if len(fieldConverters) > 0 {
 		c = &structConverter{
 			convertType,
-			fCvts,
+			fieldConverters,
 		}
 	}
 
