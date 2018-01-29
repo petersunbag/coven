@@ -23,15 +23,6 @@ func dereferencedValue(value interface{}) reflect.Value {
 	return v
 }
 
-func referDeep(t reflect.Type) (reflect.Type, int) {
-	d := 0
-	for k := t.Kind(); k == reflect.Ptr; k = t.Kind() {
-		t = t.Elem()
-		d += 1
-	}
-	return t, d
-}
-
 // emptyInterface is the header for an interface{} value.
 type emptyInterface struct {
 	typ  unsafe.Pointer

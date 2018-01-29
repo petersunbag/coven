@@ -39,7 +39,9 @@ func newMapConverter(convertType *convertType) converter {
 	return nil
 }
 
-//dv and sv must be dereferened value
+// convert only affects target with keys that source map has, the rest will remain unchanged.
+// dPtr and sPtr must pointed to a non-pointer value,
+// it is assured by delegateConverter.Convert() and elemConverter.convert()
 func (m *mapConverter) convert(dPtr, sPtr unsafe.Pointer) {
 	sv := ptrToMapValue(m.sEmptyMapInterface, sPtr)
 	dv := ptrToMapValue(m.dEmptyMapInterface, dPtr)
@@ -48,10 +50,8 @@ func (m *mapConverter) convert(dPtr, sPtr unsafe.Pointer) {
 	}
 
 	for _, sKey := range sv.MapKeys() {
-		sVal := sv.MapIndex(sKey).Interface()
-		sValPtr := (*emptyInterface)(unsafe.Pointer(&sVal)).word
-		sKeyObj := sKey.Interface()
-		sKeyPtr := (*emptyInterface)(unsafe.Pointer(&sKeyObj)).word
+		sValPtr := ValuePtr(sv.MapIndex(sKey))
+		sKeyPtr := ValuePtr(sKey)
 		dKey := reflect.New(m.dKeyTyp).Elem()
 		dVal := reflect.New(m.dValTyp).Elem()
 		m.keyConverter.convert(unsafe.Pointer(dKey.UnsafeAddr()), sKeyPtr)
@@ -65,4 +65,9 @@ func ptrToMapValue(emptyMapInterface *emptyInterface, ptr unsafe.Pointer) reflec
 	emptyMapInterface.word = ptr
 	realInterface := *(*interface{})(unsafe.Pointer(emptyMapInterface))
 	return reflect.ValueOf(realInterface).Elem()
+}
+
+func ValuePtr(v reflect.Value) unsafe.Pointer {
+	inter := v.Interface()
+	return (*emptyInterface)(unsafe.Pointer(&inter)).word
 }

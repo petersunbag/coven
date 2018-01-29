@@ -17,6 +17,12 @@ type convertType struct {
 	srcTyp reflect.Type
 }
 
+// converter can handle converting among convertible basic types,
+// and struct-struct, slice-slice, map-map converting too.
+// type with nested pointer is supported.
+
+// all methods in converter are thread-safe.
+// we can define a global variable to hold a converter and use it in any goroutine.
 type converter interface {
 	convert(dPtr, sPtr unsafe.Pointer)
 }
@@ -74,7 +80,7 @@ func newConverter(dstTyp, srcTyp reflect.Type, lock bool) *delegateConverter {
 	}
 
 	var c converter
-	if c = newGeneralConverter(cTyp); c == nil {
+	if c = newDirectConverter(cTyp); c == nil {
 		switch sk, dk := srcTyp.Kind(), dstTyp.Kind(); {
 
 		case sk == reflect.Struct && dk == reflect.Struct:

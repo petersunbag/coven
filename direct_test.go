@@ -15,7 +15,7 @@ func TestGeneralConverter_Convert(t *testing.T) {
 	dstTyp := dereferencedType(reflect.TypeOf(new(foo)))
 	srcTyp := dereferencedType(reflect.TypeOf(new(foo)))
 
-	c := newGeneralConverter(&convertType{dstTyp, srcTyp})
+	c := newDirectConverter(&convertType{dstTyp, srcTyp})
 	foo1 := &foo{1, 2}
 	foo2 := foo{}
 	c.convert(unsafe.Pointer(dereferencedValue(&foo2).UnsafeAddr()), unsafe.Pointer(dereferencedValue(&foo1).UnsafeAddr()))
@@ -25,7 +25,7 @@ func TestGeneralConverter_Convert(t *testing.T) {
 
 	dstTyp = dereferencedType(reflect.TypeOf(new(***int)))
 	srcTyp = dereferencedType(reflect.TypeOf(new(***int)))
-	c = newGeneralConverter(&convertType{dstTyp, srcTyp})
+	c = newDirectConverter(&convertType{dstTyp, srcTyp})
 	x := 1
 	y := &x
 	z := &y

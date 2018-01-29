@@ -5,6 +5,8 @@ import (
 	"unsafe"
 )
 
+// directConverter handles converting among convertible basic types,
+// and of the identical struct type.
 type directConverter struct {
 	*convertType
 	cvtOp
@@ -13,7 +15,7 @@ type directConverter struct {
 
 var intAlign = unsafe.Alignof(int(1))
 
-func newGeneralConverter(convertType *convertType) (c converter) {
+func newDirectConverter(convertType *convertType) (c converter) {
 	st := convertType.srcTyp
 	dt := convertType.dstTyp
 	sk := st.Kind()
@@ -40,11 +42,13 @@ func newGeneralConverter(convertType *convertType) (c converter) {
 	return
 }
 
-//dv and sv must be dereferened value
+// convert assigns converted source value to target.
+// dPtr and sPtr must pointed to a non-pointer value,
+// it is assured by delegateConverter.Convert() and elemConverter.convert()
 func (g *directConverter) convert(dPtr, sPtr unsafe.Pointer) {
 	if g.cvtOp != nil {
 		g.cvtOp(sPtr, dPtr)
-	} else { //dst and src have same type, exclude map and slice
+	} else { // same struct type
 		size := g.size
 		align := uintptr(0)
 		for ; align < size-intAlign; align += intAlign {

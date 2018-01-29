@@ -5,6 +5,8 @@ import (
 	"unsafe"
 )
 
+// elemConverter is converter for struct field, slice element and map key&value.
+// it deals with the nested pointers and store the converter of dereferenced types.
 type elemConverter struct {
 	sTyp                reflect.Type
 	dTyp                reflect.Type
@@ -63,6 +65,15 @@ func (e *elemConverter) convert(dPtr, sPtr unsafe.Pointer) {
 	} else {
 		e.converter.convert(dPtr, sPtr)
 	}
+}
+
+func referDeep(t reflect.Type) (reflect.Type, int) {
+	d := 0
+	for k := t.Kind(); k == reflect.Ptr; k = t.Kind() {
+		t = t.Elem()
+		d += 1
+	}
+	return t, d
 }
 
 func newValuePtr(t reflect.Type) unsafe.Pointer {
