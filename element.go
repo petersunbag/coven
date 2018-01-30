@@ -1,7 +1,7 @@
 package coven
 
 import (
-	"github.com/petersunbag/coven/basic"
+	"github.com/petersunbag/coven/ptr"
 	"reflect"
 	"unsafe"
 )
@@ -13,8 +13,6 @@ type elemConverter struct {
 	dTyp                reflect.Type
 	sDereferTyp         reflect.Type
 	dDereferTyp         reflect.Type
-	sDereferSize        uintptr
-	dDereferSize        uintptr
 	sReferDeep          int
 	dReferDeep          int
 	sEmptyDereferValPtr unsafe.Pointer
@@ -34,8 +32,6 @@ func newElemConverter(dt, st reflect.Type) (e *elemConverter, ok bool) {
 
 	e.sDereferTyp, e.sReferDeep = referDeep(e.sDereferTyp)
 	e.dDereferTyp, e.dReferDeep = referDeep(e.dDereferTyp)
-	e.sDereferSize = e.sDereferTyp.Size()
-	e.dDereferSize = e.dDereferTyp.Size()
 
 	if converter := newConverter(e.dDereferTyp, e.sDereferTyp, false); converter != nil {
 		e.converter = converter
@@ -79,7 +75,7 @@ func referDeep(t reflect.Type) (reflect.Type, int) {
 
 func newValuePtr(t reflect.Type) unsafe.Pointer {
 	var v unsafe.Pointer
-	if v = basic.NewValuePtr(t.Kind()); v == nil {
+	if v = ptr.NewValuePtr(t.Kind()); v == nil {
 		v = unsafe.Pointer(reflect.New(t).Elem().UnsafeAddr())
 	}
 	return v

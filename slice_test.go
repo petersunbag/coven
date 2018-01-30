@@ -27,4 +27,25 @@ func TestSliceConverter_Convert(t *testing.T) {
 	if expected := `[{"A":1},{"A":2},{"A":3}]`; !reflect.DeepEqual(expected, jsonEncode(d)) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(d))
 	}
+
+	a := []int{1, 2, 3}
+	b := []*byte{}
+
+	c = newSliceConverter(&convertType{reflect.TypeOf([]*byte{}), reflect.TypeOf([]int{})})
+	c.convert(unsafe.Pointer(&b), unsafe.Pointer(&a))
+	if expected := `[1,2,3]`; !reflect.DeepEqual(expected, jsonEncode(b)) {
+		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(b))
+	}
+}
+
+func TestSameSliceConvert(t *testing.T) {
+	a := []int{1, 2, 3}
+	b := []int{4}
+
+	c := newSliceConverter(&convertType{reflect.TypeOf([]int{}), reflect.TypeOf([]int{})})
+
+	c.convert(unsafe.Pointer(&b), unsafe.Pointer(&a))
+	if expected := []int{1, 2, 3}; !reflect.DeepEqual(expected, b) {
+		t.Fatalf("[expected:%v] [actual:%v]", expected, b)
+	}
 }

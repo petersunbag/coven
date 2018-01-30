@@ -7,25 +7,9 @@ import (
 )
 
 func TestGeneralConverter_Convert(t *testing.T) {
-	type foo struct {
-		A int
-		B byte
-	}
-
-	dstTyp := dereferencedType(reflect.TypeOf(new(foo)))
-	srcTyp := dereferencedType(reflect.TypeOf(new(foo)))
-
+	dstTyp := dereferencedType(reflect.TypeOf(new(***int)))
+	srcTyp := dereferencedType(reflect.TypeOf(new(***int)))
 	c := newDirectConverter(&convertType{dstTyp, srcTyp})
-	foo1 := &foo{1, 2}
-	foo2 := foo{}
-	c.convert(unsafe.Pointer(dereferencedValue(&foo2).UnsafeAddr()), unsafe.Pointer(dereferencedValue(&foo1).UnsafeAddr()))
-	if expected := `{"A":1,"B":2}`; !reflect.DeepEqual(expected, jsonEncode(foo2)) {
-		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(foo2))
-	}
-
-	dstTyp = dereferencedType(reflect.TypeOf(new(***int)))
-	srcTyp = dereferencedType(reflect.TypeOf(new(***int)))
-	c = newDirectConverter(&convertType{dstTyp, srcTyp})
 	x := 1
 	y := &x
 	z := &y

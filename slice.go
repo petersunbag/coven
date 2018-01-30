@@ -1,6 +1,7 @@
 package coven
 
 import (
+	"github.com/petersunbag/coven/ptr"
 	"reflect"
 	"unsafe"
 )
@@ -8,14 +9,27 @@ import (
 type sliceConverter struct {
 	*convertType
 	*elemConverter
+	sElemSize       uintptr
+	dElemSize       uintptr
+	sEmptyInterface *emptyInterface
+	dEmptyInterface *emptyInterface
 }
 
 func newSliceConverter(convertType *convertType) (s converter) {
-	if elemConverter, ok := newElemConverter(convertType.dstTyp.Elem(), convertType.srcTyp.Elem()); ok {
-		s = &sliceConverter{
-			convertType,
-			elemConverter,
-		}
+	c := &sliceConverter{
+		convertType: convertType,
+		sElemSize:   convertType.srcTyp.Elem().Size(),
+		dElemSize:   convertType.dstTyp.Elem().Size(),
+	}
+	if convertType.srcTyp == convertType.dstTyp {
+		sEmpty := reflect.New(convertType.srcTyp).Elem().Interface()
+		dEmpty := reflect.New(convertType.srcTyp).Elem().Interface()
+		c.sEmptyInterface = (*emptyInterface)(unsafe.Pointer(&sEmpty))
+		c.dEmptyInterface = (*emptyInterface)(unsafe.Pointer(&dEmpty))
+		s = c
+	} else if elemConverter, ok := newElemConverter(convertType.dstTyp.Elem(), convertType.srcTyp.Elem()); ok {
+		c.elemConverter = elemConverter
+		s = c
 	}
 	return
 }
@@ -36,11 +50,16 @@ func (s *sliceConverter) convert(dPtr, sPtr unsafe.Pointer) {
 		dSlice.Cap = length
 	}
 
+	if s.srcTyp == s.dstTyp {
+		ptr.Copy(dSlice.Data, sSlice.Data, uintptr(length)*s.sElemSize)
+		return
+	}
+
 	for dOffset, sOffset, i := uintptr(0), uintptr(0), 0; i < length; i++ {
 		dElemPtr := unsafe.Pointer(uintptr(dSlice.Data) + dOffset)
 		sElemPtr := unsafe.Pointer(uintptr(sSlice.Data) + sOffset)
 		s.elemConverter.convert(dElemPtr, sElemPtr)
-		dOffset += s.elemConverter.dDereferSize
-		sOffset += s.elemConverter.sDereferSize
+		dOffset += s.dElemSize
+		sOffset += s.sElemSize
 	}
 }

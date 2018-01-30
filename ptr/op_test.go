@@ -1,4 +1,4 @@
-package basic
+package ptr
 
 import (
 	"testing"

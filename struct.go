@@ -1,6 +1,7 @@
 package coven
 
 import (
+	"github.com/petersunbag/coven/ptr"
 	"reflect"
 	"unicode"
 	"unsafe"
@@ -9,11 +10,19 @@ import (
 type structConverter struct {
 	*convertType
 	fieldConverters []*fieldConverter
+	size            uintptr
 }
 
 // NewStructConverter finds convertible fields of the same name in convertType,
 // and stores fieldConverters in structConverter, including nested anonymous fields.
 func newStructConverter(convertType *convertType) (s converter) {
+	if convertType.srcTyp == convertType.dstTyp {
+		s = &structConverter{
+			convertType: convertType,
+			size:        convertType.srcTyp.Size(),
+		}
+		return
+	}
 	_, sFields := extractFields(convertType.srcTyp, 0)
 	dFieldIndex, _ := extractFields(convertType.dstTyp, 0)
 	fieldConverters := make([]*fieldConverter, 0, len(dFieldIndex))
@@ -27,8 +36,8 @@ func newStructConverter(convertType *convertType) (s converter) {
 
 	if len(fieldConverters) > 0 {
 		s = &structConverter{
-			convertType,
-			fieldConverters,
+			convertType:     convertType,
+			fieldConverters: fieldConverters,
 		}
 	}
 
@@ -39,6 +48,11 @@ func newStructConverter(convertType *convertType) (s converter) {
 // dPtr and sPtr must pointed to a non-pointer value,
 // it is assured by delegateConverter.Convert() and elemConverter.convert()
 func (s *structConverter) convert(dPtr, sPtr unsafe.Pointer) {
+	if s.dstTyp == s.srcTyp {
+		ptr.Copy(dPtr, sPtr, s.size)
+		return
+	}
+
 	for _, fieldConverter := range s.fieldConverters {
 		dPtr := unsafe.Pointer(uintptr(dPtr) + fieldConverter.dOffset)
 		sPtr := unsafe.Pointer(uintptr(sPtr) + fieldConverter.sOffset)
