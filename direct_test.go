@@ -40,3 +40,37 @@ func TestGeneralConverter_Convert(t *testing.T) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(q))
 	}
 }
+
+func TestStringCvt(t *testing.T) {
+	a := []byte{'a', 'b', 'c'}
+	b := ""
+	c := newDirectConverter(&convertType{reflect.TypeOf(b), reflect.TypeOf(a)})
+	c.convert(unsafe.Pointer(&b), unsafe.Pointer(&a))
+
+	if expected := "abc"; expected != b {
+		t.Fatalf("[expected:%v] [actual:%v]", expected, b)
+	}
+
+	d := []rune{'e', 'f', 'g'}
+	c = newDirectConverter(&convertType{reflect.TypeOf(b), reflect.TypeOf(d)})
+	c.convert(unsafe.Pointer(&b), unsafe.Pointer(&d))
+
+	if expected := "efg"; expected != b {
+		t.Fatalf("[expected:%v] [actual:%v]", expected, b)
+	}
+
+	c = newDirectConverter(&convertType{reflect.TypeOf(a), reflect.TypeOf(b)})
+	c.convert(unsafe.Pointer(&a), unsafe.Pointer(&b))
+
+	if expected := []byte{'e', 'f', 'g'}; !reflect.DeepEqual(expected, a) {
+		t.Fatalf("[expected:%v] [actual:%v]", expected, a)
+	}
+
+	b = "xyz"
+	c = newDirectConverter(&convertType{reflect.TypeOf(d), reflect.TypeOf(b)})
+	c.convert(unsafe.Pointer(&d), unsafe.Pointer(&b))
+
+	if expected := []rune{'x', 'y', 'z'}; !reflect.DeepEqual(expected, d) {
+		t.Fatalf("[expected:%v] [actual:%v]", expected, d)
+	}
+}

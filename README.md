@@ -20,7 +20,7 @@ type foobar struct {
 }
 type Foo struct {
 	A []int
-	B map[int64]string
+	B map[int64][]byte
 	C byte
 	foobar
 }
@@ -32,17 +32,18 @@ type Bar struct {
 	D int64
 }
 
-c := NewConverter(Bar{}, Foo{})
+var c = NewConverter(Bar{}, Foo{})
 
-foo := Foo{[]int{1, 2, 3}, map[int64]string{1: "a", 2: "b", 3: "c"}, 6, foobar{11}}
-bar := Bar{}
-c.Convert(&bar, &foo)
-
-bytes, _ := json.Marshal(bar)
-fmt.Println(string(bytes))
+func demo(){
+    foo := Foo{[]int{1, 2, 3}, map[int64][]byte{1: []byte{'a', 'b'}, 2: []byte{'b', 'a'}, 3: []byte{'c', 'd'}}, 6, foobar{11}}
+    bar := Bar{}
+    c.Convert(&bar, &foo)
+    bytes, _ := json.Marshal(bar)
+    fmt.Println(string(bytes))
+}
 
 // Output:
-// {"A":[1,2,3],"B":{"1":"a","2":"b","3":"c"},"C":6,"D":11}
+// {"A":[1,2,3],"B":{"1":"ab","2":"ba","3":"cd"},"C":6,"D":11}
 ```
 
 ## License ##

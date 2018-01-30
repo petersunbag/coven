@@ -4,13 +4,13 @@ def methodname(stype, dtype):
 def method(stype, dtype):
 	if dtype == 'string':
 		tempelate = '''
-func %(methodname)s(sPtr unsafe.Pointer, dPtr unsafe.Pointer) {
+func %(methodname)s(sPtr, dPtr unsafe.Pointer) {
 	*(*%(dtype)s)(dPtr) = fmt.Sprintf("%%v", *(*%(stype)s)(sPtr))
 }
 '''
 	else:
 		tempelate = '''
-func %(methodname)s(sPtr unsafe.Pointer, dPtr unsafe.Pointer) {
+func %(methodname)s(sPtr, dPtr unsafe.Pointer) {
 	*(*%(dtype)s)(dPtr) = (%(dtype)s)(*(*%(stype)s)(sPtr))
 }
 '''
@@ -23,7 +23,8 @@ def newT(type):
 	return \
 '''func new%(type)sPtr() unsafe.Pointer {
 	v := %(v)s
-	return unsafe.Pointer(&v)}
+	return unsafe.Pointer(&v)
+}
 
 ''' % {'type':str.capitalize(type), 'v': defaultvalue[type]}
 
@@ -48,7 +49,7 @@ func newBasicValuePtr(k reflect.Kind) unsafe.Pointer {
 
 typelist = ['bool', 'int', 'uint', 'int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32', 'int64', 'uint64', 'float32', 'float64', 'complex64', 'complex128', 'uintptr', 'string']
 typeconvert = {
-	'bool': ['bool'],
+	'bool': ['bool', 'string'],
 	'int' : ['int', 'uint', 'int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32', 'int64', 'uint64', 'float32', 'float64', 'uintptr', 'string'],
 	'uint' : ['int', 'uint', 'int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32', 'int64', 'uint64', 'float32', 'float64', 'uintptr', 'string'],
 	'int8' : ['int', 'uint', 'int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32', 'int64', 'uint64', 'float32', 'float64', 'uintptr', 'string'],
@@ -59,10 +60,10 @@ typeconvert = {
 	'uint32' : ['int', 'uint', 'int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32', 'int64', 'uint64', 'float32', 'float64', 'uintptr', 'string'],
 	'int64' : ['int', 'uint', 'int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32', 'int64', 'uint64', 'float32', 'float64', 'uintptr', 'string'],
 	'uint64' : ['int', 'uint', 'int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32', 'int64', 'uint64', 'float32', 'float64', 'uintptr', 'string'],
-	'float32' : ['int', 'uint', 'int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32', 'int64', 'uint64', 'float32', 'float64', 'uintptr'],
-	'float64' : ['int', 'uint', 'int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32', 'int64', 'uint64', 'float32', 'float64', 'uintptr'],
-	'complex64' : ['complex64', 'complex128'],
-	'complex128' : ['complex64', 'complex128'],
+	'float32' : ['int', 'uint', 'int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32', 'int64', 'uint64', 'float32', 'float64', 'uintptr', 'string'],
+	'float64' : ['int', 'uint', 'int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32', 'int64', 'uint64', 'float32', 'float64', 'uintptr', 'string'],
+	'complex64' : ['complex64', 'complex128', 'string'],
+	'complex128' : ['complex64', 'complex128', 'string'],
 	'uintptr' :['int', 'uint', 'int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32', 'int64', 'uint64', 'float32', 'float64', 'uintptr', 'string'],
 	'string' : ['string'],
 }

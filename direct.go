@@ -18,20 +18,16 @@ var intAlign = unsafe.Alignof(int(1))
 func newDirectConverter(convertType *convertType) (c converter) {
 	st := convertType.srcTyp
 	dt := convertType.dstTyp
-	sk := st.Kind()
-	dk := dt.Kind()
-	if sk == reflect.Slice || sk == reflect.Map {
-		return
-	}
 
-	if cvtOp := cvtOps[convertKind{sk, dk}]; cvtOp != nil {
+	if cvtOp := getCvtOp(st, dt); cvtOp != nil {
 		c = &directConverter{
 			convertType: convertType,
 			cvtOp:       cvtOp,
 		}
 		return
 	}
-	if st == dt && sk == reflect.Struct {
+
+	if st == dt && st.Kind() == reflect.Struct {
 		c = &directConverter{
 			convertType: convertType,
 			size:        st.Size(),
@@ -58,4 +54,52 @@ func (g *directConverter) convert(dPtr, sPtr unsafe.Pointer) {
 			*(*byte)(unsafe.Pointer(uintptr(dPtr) + align)) = *(*byte)(unsafe.Pointer(uintptr(sPtr) + align))
 		}
 	}
+}
+
+func getCvtOp(st, dt reflect.Type) cvtOp {
+	sk := st.Kind()
+	dk := dt.Kind()
+	if cvtOp := cvtOps[convertKind{sk, dk}]; cvtOp != nil {
+		return cvtOp
+	}
+
+	switch sk {
+	case reflect.Slice:
+		if dk == reflect.String && st.Elem().PkgPath() == "" {
+			switch st.Elem().Kind() {
+			case reflect.Uint8:
+				return cvtBytesString
+			case reflect.Int32:
+				return cvtRunesString
+			}
+		}
+
+	case reflect.String:
+		if dk == reflect.Slice && dt.Elem().PkgPath() == "" {
+			switch dt.Elem().Kind() {
+			case reflect.Uint8:
+				return cvtStringBytes
+			case reflect.Int32:
+				return cvtStringRunes
+			}
+		}
+	}
+
+	return nil
+}
+
+func cvtRunesString(sPtr unsafe.Pointer, dPtr unsafe.Pointer) {
+	*(*string)(dPtr) = (string)(*(*[]rune)(sPtr))
+}
+
+func cvtBytesString(sPtr unsafe.Pointer, dPtr unsafe.Pointer) {
+	*(*string)(dPtr) = (string)(*(*[]byte)(sPtr))
+}
+
+func cvtStringRunes(sPtr unsafe.Pointer, dPtr unsafe.Pointer) {
+	*(*[]rune)(dPtr) = ([]rune)(*(*string)(sPtr))
+}
+
+func cvtStringBytes(sPtr unsafe.Pointer, dPtr unsafe.Pointer) {
+	*(*[]byte)(dPtr) = ([]byte)(*(*string)(sPtr))
 }
