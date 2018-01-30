@@ -1,4 +1,8 @@
 # coven #
+
+[![Build Status](https://travis-ci.org/petersunbag/coven.svg?branch=master)](https://travis-ci.org/petersunbag/coven)
+[![Coverage Status](https://coveralls.io/repos/github/petersunbag/coven/badge.svg?branch=master)](https://coveralls.io/github/petersunbag/coven?branch=master)
+
 support struct-to-struct, slice-to-slice and map-to-map converting.
 this project is inspired by https://github.com/thrift-iterator/go
 * struct converting only affects target fields of the same name with source fields, the rest will remain unchanged.nested anonymous fields are supported.
