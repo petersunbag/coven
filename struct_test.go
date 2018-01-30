@@ -14,6 +14,7 @@ func TestSimpleConvert(t *testing.T) {
 		D *int
 		E []int
 		f int
+		G bool
 	}
 	type Bar struct {
 		A int
@@ -22,6 +23,7 @@ func TestSimpleConvert(t *testing.T) {
 		D **int
 		E []*int
 		f int64
+		G int
 	}
 
 	c := newStructConverter(&convertType{reflect.TypeOf(Bar{}), reflect.TypeOf(Foo{})})
@@ -32,15 +34,15 @@ func TestSimpleConvert(t *testing.T) {
 	bar := Bar{}
 	bb := &bar
 
-	foo := Foo{1, "a", &s, &i, []int{1, 2, 3}, 4}
+	foo := Foo{1, "a", &s, &i, []int{1, 2, 3}, 4, true}
 	c.convert(unsafe.Pointer(dereferencedValue(&bb).UnsafeAddr()), unsafe.Pointer(dereferencedValue(&foo).UnsafeAddr()))
-	if expected := `{"A":1,"B":"a","C":"b","D":2,"E":[1,2,3]}`; expected != jsonEncode(bb) {
+	if expected := `{"A":1,"B":"a","C":"b","D":2,"E":[1,2,3],"G":0}`; expected != jsonEncode(bb) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(bb))
 	}
 
-	foo2 := Foo{1, "a", nil, nil, nil, 5}
+	foo2 := Foo{1, "a", nil, nil, nil, 5, true}
 	c.convert(unsafe.Pointer(dereferencedValue(&bar).UnsafeAddr()), unsafe.Pointer(dereferencedValue(&foo2).UnsafeAddr()))
-	if expected := `{"A":1,"B":"a","C":"","D":0,"E":[]}`; expected != jsonEncode(bar) {
+	if expected := `{"A":1,"B":"a","C":"","D":0,"E":[],"G":0}`; expected != jsonEncode(bar) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(bar))
 	}
 }

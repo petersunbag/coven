@@ -10,15 +10,15 @@ type sliceConverter struct {
 	*elemConverter
 }
 
-func newSliceConverter(convertType *convertType) converter {
+func newSliceConverter(convertType *convertType) (s converter) {
 	if elemConverter, ok := newElemConverter(convertType.dstTyp.Elem(), convertType.srcTyp.Elem()); ok {
-		s := &sliceConverter{
+		s = &sliceConverter{
 			convertType,
 			elemConverter,
 		}
 		return s
 	}
-	return nil
+	return
 }
 
 // convert will overwrite the whole target slice.

@@ -15,7 +15,7 @@ type mapConverter struct {
 	dEmptyMapInterface *emptyInterface
 }
 
-func newMapConverter(convertType *convertType) converter {
+func newMapConverter(convertType *convertType) (m converter) {
 	sKeyTyp := convertType.srcTyp.Key()
 	dKeyTyp := convertType.dstTyp.Key()
 	sValTyp := convertType.srcTyp.Elem()
@@ -24,7 +24,7 @@ func newMapConverter(convertType *convertType) converter {
 		if valueConverter, ok := newElemConverter(dValTyp, sValTyp); ok {
 			sEmpty := reflect.New(convertType.srcTyp).Interface()
 			dEmpty := reflect.New(convertType.dstTyp).Interface()
-			m := &mapConverter{
+			m = &mapConverter{
 				convertType,
 				dKeyTyp,
 				dValTyp,
@@ -36,7 +36,7 @@ func newMapConverter(convertType *convertType) converter {
 			return m
 		}
 	}
-	return nil
+	return
 }
 
 // convert only affects target with keys that source map has, the rest will remain unchanged.

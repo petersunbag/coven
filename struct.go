@@ -13,7 +13,7 @@ type structConverter struct {
 
 // NewStructConverter finds convertible fields of the same name in convertType,
 // and stores fieldConverters in structConverter, including nested anonymous fields.
-func newStructConverter(convertType *convertType) (c converter) {
+func newStructConverter(convertType *convertType) (s converter) {
 	_, sFields := extractFields(convertType.srcTyp, 0)
 	dFieldIndex, _ := extractFields(convertType.dstTyp, 0)
 	fieldConverters := make([]*fieldConverter, 0, len(dFieldIndex))
@@ -26,7 +26,7 @@ func newStructConverter(convertType *convertType) (c converter) {
 	}
 
 	if len(fieldConverters) > 0 {
-		c = &structConverter{
+		s = &structConverter{
 			convertType,
 			fieldConverters,
 		}

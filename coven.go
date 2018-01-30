@@ -91,9 +91,6 @@ func newConverter(dstTyp, srcTyp reflect.Type, lock bool) *delegateConverter {
 
 		case sk == reflect.Map && dk == reflect.Map:
 			c = newMapConverter(cTyp)
-
-		default:
-			return nil
 		}
 	}
 	if c != nil {
