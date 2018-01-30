@@ -4,6 +4,6 @@ install:
   - go get golang.org/x/tools/cmd/cover
   - go get github.com/mattn/goveralls
 script:
-  - overalls -project=github.com/petersunbag/coven -covermode=count -ignore='.git,basic'
+  - overalls -project=github.com/petersunbag/coven -covermode=count -ignore='.git,ptr'
   - 'if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ ! -z "$COVERALLS_TOKEN" ]; then $HOME/gopath/bin/goveralls -coverprofile=overalls.coverprofile -service=travis-ci -repotoken $COVERALLS_TOKEN; fi'
   - go test ./...

@@ -12,10 +12,7 @@ type directConverter struct {
 }
 
 func newDirectConverter(convertType *convertType) (c converter) {
-	st := convertType.srcTyp
-	dt := convertType.dstTyp
-
-	if cvtOp := ptr.GetCvtOp(st, dt); cvtOp != nil {
+	if cvtOp := ptr.GetCvtOp(convertType.srcTyp, convertType.dstTyp); cvtOp != nil {
 		c = &directConverter{
 			convertType: convertType,
 			cvtOp:       cvtOp,

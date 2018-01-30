@@ -9,10 +9,8 @@ import (
 type sliceConverter struct {
 	*convertType
 	*elemConverter
-	sElemSize       uintptr
-	dElemSize       uintptr
-	sEmptyInterface *emptyInterface
-	dEmptyInterface *emptyInterface
+	sElemSize uintptr
+	dElemSize uintptr
 }
 
 func newSliceConverter(convertType *convertType) (s converter) {
@@ -22,10 +20,6 @@ func newSliceConverter(convertType *convertType) (s converter) {
 		dElemSize:   convertType.dstTyp.Elem().Size(),
 	}
 	if convertType.srcTyp == convertType.dstTyp {
-		sEmpty := reflect.New(convertType.srcTyp).Elem().Interface()
-		dEmpty := reflect.New(convertType.srcTyp).Elem().Interface()
-		c.sEmptyInterface = (*emptyInterface)(unsafe.Pointer(&sEmpty))
-		c.dEmptyInterface = (*emptyInterface)(unsafe.Pointer(&dEmpty))
 		s = c
 	} else if elemConverter, ok := newElemConverter(convertType.dstTyp.Elem(), convertType.srcTyp.Elem()); ok {
 		c.elemConverter = elemConverter
@@ -62,4 +56,11 @@ func (s *sliceConverter) convert(dPtr, sPtr unsafe.Pointer) {
 		dOffset += s.dElemSize
 		sOffset += s.sElemSize
 	}
+}
+
+// sliceHeader is a safe version of SliceHeader used within this package.
+type sliceHeader struct {
+	Data unsafe.Pointer
+	Len  int
+	Cap  int
 }
