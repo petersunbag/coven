@@ -16,7 +16,6 @@ func newSliceConverter(convertType *convertType) (s converter) {
 			convertType,
 			elemConverter,
 		}
-		return s
 	}
 	return
 }

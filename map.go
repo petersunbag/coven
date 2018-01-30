@@ -33,7 +33,6 @@ func newMapConverter(convertType *convertType) (m converter) {
 				(*emptyInterface)(unsafe.Pointer(&sEmpty)),
 				(*emptyInterface)(unsafe.Pointer(&dEmpty)),
 			}
-			return m
 		}
 	}
 	return
