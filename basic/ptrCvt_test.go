@@ -1,4 +1,4 @@
-package coven
+package basic
 
 import (
 	"testing"

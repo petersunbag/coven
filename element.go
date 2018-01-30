@@ -1,6 +1,7 @@
 package coven
 
 import (
+	"github.com/petersunbag/coven/basic"
 	"reflect"
 	"unsafe"
 )
@@ -78,7 +79,7 @@ func referDeep(t reflect.Type) (reflect.Type, int) {
 
 func newValuePtr(t reflect.Type) unsafe.Pointer {
 	var v unsafe.Pointer
-	if v = newBasicValuePtr(t.Kind()); v == nil {
+	if v = basic.NewValuePtr(t.Kind()); v == nil {
 		v = unsafe.Pointer(reflect.New(t).Elem().UnsafeAddr())
 	}
 	return v
