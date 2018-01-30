@@ -23,17 +23,17 @@ type foobar struct {
     D int
 }
 type Foo struct {
-	A []int
-	B map[int64][]byte
-	C byte
-	foobar
+    A []int
+    B map[int64][]byte
+    C byte
+    foobar
 }
 
 type Bar struct {
-	A []*int
-	B map[string]*string
-	C *byte
-	D int64
+    A []*int
+    B map[string]*string
+    C *byte
+    D int64
 }
 
 var c = NewConverter(Bar{}, Foo{})
