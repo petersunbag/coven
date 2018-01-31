@@ -3,8 +3,8 @@
 [![Build Status](https://travis-ci.org/petersunbag/coven.svg?branch=master)](https://travis-ci.org/petersunbag/coven)
 [![Coverage Status](https://coveralls.io/repos/github/petersunbag/coven/badge.svg?branch=master&98)](https://coveralls.io/github/petersunbag/coven?branch=master)
 
-support struct-to-struct, slice-to-slice and map-to-map converting.  
-this project is inspired by https://github.com/thrift-iterator/go
+Support struct-to-struct, slice-to-slice and map-to-map converting.  
+This package is inspired by https://github.com/thrift-iterator/go
 * struct converting only affects target fields of the same name with source fields, the rest will remain unchanged.nested anonymous fields are supported.
 * map converting only affects target with keys that source map has, the rest will remain unchanged.
 * slice converting will overwrite the whole target slice.
@@ -49,7 +49,18 @@ func demo(){
 // Output:
 // {"A":[1,2,3],"B":{"1":"ab","2":"ba","3":"cd"},"C":6,"D":11}
 ```
+## Benchmark ##
 
+Direct ptr operation is faster than using reflection for basic types, such as int to float conversion, and even for identical slice or struct.
+
+| ptr int-float | reflection int-float | ptr struct  | reflection struct | ptr slice  | reflection slice |
+| ---           | ---                  | ---         | ---               | ---        | ---              |
+| 57.9 ns/op    | 98.6 ns/op           | 86.9 ns/op  | 118 ns/op         | 80.2 ns/op | 99.7 ns/op       |
+| 0 B/op        | 16 B/op              | 0 B/op      | 64 B/op           | 0 B/op     | 32 B/op          |
+| 0 allocs/op   | 2 allocs/op          | 0 allocs/op | 1 allocs/op       | 0 allocs/op| 1 allocs/op      |
+
+Test cases above don't include map type, because there is no way to operate map through ptr in Go.  
+See benchmark_test.go for details.
 ## License ##
 
 This package is licensed under MIT license. See LICENSE for details.

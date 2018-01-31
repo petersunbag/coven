@@ -95,15 +95,22 @@ func BenchmarkStructConvert(b *testing.B) {
 }
 
 func BenchmarkSameStruct(b *testing.B) {
-	type foo struct {
+	type bar struct {
 		A int
 		B byte
 	}
 
+	type foo struct {
+		bar
+		C string
+		D []int
+	}
+
+
 	Foo := foo{}
 
 	c := NewConverter(Foo, Foo)
-	foo1 := &foo{1, 2}
+	foo1 := &foo{bar{1,2}, "abc", []int{1,2,3}}
 	foo2 := foo{}
 
 	for i := 0; i < b.N; i++ {
@@ -112,12 +119,18 @@ func BenchmarkSameStruct(b *testing.B) {
 }
 
 func BenchmarkSameStructReflect(b *testing.B) {
-	type foo struct {
+	type bar struct {
 		A int
 		B byte
 	}
 
-	foo1 := foo{1, 2}
+	type foo struct {
+		bar
+		C string
+		D []int
+	}
+
+	foo1 := foo{bar{1,2}, "abc", []int{1,2,3}}
 	foo2 := foo{}
 	t := reflect.TypeOf(foo1)
 
@@ -163,6 +176,6 @@ func BenchmarkBasicReflect(b *testing.B) {
 	t := reflect.TypeOf(y)
 
 	for i := 0; i < b.N; i++ {
-		y = reflect.ValueOf(x).Convert(t).Float()
+		reflect.ValueOf(&y).Elem().Set(reflect.ValueOf(x).Convert(t))
 	}
 }
