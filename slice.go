@@ -30,7 +30,7 @@ func newSliceConverter(convertType *convertType) (s converter) {
 
 // convert will overwrite the whole target slice.
 // dPtr and sPtr must pointed to a non-pointer value,
-// it is assured by delegateConverter.Convert() and elemConverter.convert()
+// it is assured by Converter.Convert() and elemConverter.convert()
 func (s *sliceConverter) convert(dPtr, sPtr unsafe.Pointer) {
 	dSlice := (*sliceHeader)(dPtr)
 	sSlice := (*sliceHeader)(sPtr)

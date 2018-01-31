@@ -9,7 +9,7 @@ import (
 
 var (
 	createdConvertersMu sync.Mutex
-	createdConverters   = make(map[convertType]*delegateConverter)
+	createdConverters   = make(map[convertType]*Converter)
 )
 
 type convertType struct {
@@ -27,12 +27,12 @@ type converter interface {
 	convert(dPtr, sPtr unsafe.Pointer)
 }
 
-type delegateConverter struct {
+type Converter struct {
 	*convertType
 	converter
 }
 
-func (d *delegateConverter) Convert(dst, src interface{}) {
+func (d *Converter) Convert(dst, src interface{}) {
 	dv := dereferencedValue(dst)
 	if !dv.CanSet() {
 		panic(fmt.Sprintf("target should be a pointer. [actual:%v]", dv.Type()))
@@ -54,7 +54,7 @@ func (d *delegateConverter) Convert(dst, src interface{}) {
 	d.converter.convert(unsafe.Pointer(dv.UnsafeAddr()), unsafe.Pointer(sv.UnsafeAddr()))
 }
 
-func NewConverter(dst, src interface{}) *delegateConverter {
+func NewConverter(dst, src interface{}) *Converter {
 	dstTyp := reflect.TypeOf(dst)
 	srcTyp := reflect.TypeOf(src)
 
@@ -65,7 +65,7 @@ func NewConverter(dst, src interface{}) *delegateConverter {
 	}
 }
 
-func newConverter(dstTyp, srcTyp reflect.Type, lock bool) *delegateConverter {
+func newConverter(dstTyp, srcTyp reflect.Type, lock bool) *Converter {
 	if lock {
 		createdConvertersMu.Lock()
 		defer createdConvertersMu.Unlock()
@@ -94,7 +94,7 @@ func newConverter(dstTyp, srcTyp reflect.Type, lock bool) *delegateConverter {
 		}
 	}
 	if c != nil {
-		dc := &delegateConverter{cTyp, c}
+		dc := &Converter{cTyp, c}
 		createdConverters[*cTyp] = dc
 		return dc
 	}
