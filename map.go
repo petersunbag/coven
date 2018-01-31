@@ -49,8 +49,8 @@ func (m *mapConverter) convert(dPtr, sPtr unsafe.Pointer) {
 	}
 
 	for _, sKey := range sv.MapKeys() {
-		sValPtr := ValuePtr(sv.MapIndex(sKey))
-		sKeyPtr := ValuePtr(sKey)
+		sValPtr := valuePtr(sv.MapIndex(sKey))
+		sKeyPtr := valuePtr(sKey)
 		dKey := reflect.New(m.dKeyTyp).Elem()
 		dVal := reflect.New(m.dValTyp).Elem()
 		m.keyConverter.convert(unsafe.Pointer(dKey.UnsafeAddr()), sKeyPtr)
@@ -72,7 +72,7 @@ func ptrToMapValue(emptyMapInterface *emptyInterface, ptr unsafe.Pointer) reflec
 	return reflect.ValueOf(realInterface).Elem()
 }
 
-func ValuePtr(v reflect.Value) unsafe.Pointer {
+func valuePtr(v reflect.Value) unsafe.Pointer {
 	inter := v.Interface()
 	return (*emptyInterface)(unsafe.Pointer(&inter)).word
 }

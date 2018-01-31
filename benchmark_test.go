@@ -1,8 +1,8 @@
 package coven
 
 import (
-	"testing"
 	"reflect"
+	"testing"
 )
 
 func BenchmarkCoven(b *testing.B) {
@@ -25,7 +25,7 @@ func BenchmarkCoven(b *testing.B) {
 
 	c := NewConverter(Bar{}, Foo{})
 
-	foo := Foo{[]int{1, 2, 3}, map[int64]int{1:1,2:2,3:3},6, foobar{11}}
+	foo := Foo{[]int{1, 2, 3}, map[int64]int{1: 1, 2: 2, 3: 3}, 6, foobar{11}}
 	bar := Bar{}
 
 	for i := 0; i < b.N; i++ {
@@ -106,11 +106,10 @@ func BenchmarkSameStruct(b *testing.B) {
 		D []int
 	}
 
-
 	Foo := foo{}
 
 	c := NewConverter(Foo, Foo)
-	foo1 := &foo{bar{1,2}, "abc", []int{1,2,3}}
+	foo1 := &foo{bar{1, 2}, "abc", []int{1, 2, 3}}
 	foo2 := foo{}
 
 	for i := 0; i < b.N; i++ {
@@ -130,7 +129,7 @@ func BenchmarkSameStructReflect(b *testing.B) {
 		D []int
 	}
 
-	foo1 := foo{bar{1,2}, "abc", []int{1,2,3}}
+	foo1 := foo{bar{1, 2}, "abc", []int{1, 2, 3}}
 	foo2 := foo{}
 	t := reflect.TypeOf(foo1)
 
