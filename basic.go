@@ -6,14 +6,14 @@ import (
 )
 
 // directConverter handles converting among convertible basic types
-type directConverter struct {
+type basicConverter struct {
 	*convertType
 	cvtOp ptr.CvtOp
 }
 
-func newDirectConverter(convertType *convertType) (c converter) {
+func newBasicConverter(convertType *convertType) (c converter) {
 	if cvtOp := ptr.GetCvtOp(convertType.srcTyp, convertType.dstTyp); cvtOp != nil {
-		c = &directConverter{
+		c = &basicConverter{
 			convertType: convertType,
 			cvtOp:       cvtOp,
 		}
@@ -25,6 +25,6 @@ func newDirectConverter(convertType *convertType) (c converter) {
 // convert assigns converted source value to target.
 // dPtr and sPtr must pointed to a non-pointer value,
 // it is assured by delegateConverter.Convert() and elemConverter.convert()
-func (g *directConverter) convert(dPtr, sPtr unsafe.Pointer) {
+func (g *basicConverter) convert(dPtr, sPtr unsafe.Pointer) {
 	g.cvtOp(sPtr, dPtr)
 }

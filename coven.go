@@ -80,7 +80,7 @@ func newConverter(dstTyp, srcTyp reflect.Type, lock bool) *delegateConverter {
 	}
 
 	var c converter
-	if c = newDirectConverter(cTyp); c == nil {
+	if c = newBasicConverter(cTyp); c == nil {
 		switch sk, dk := srcTyp.Kind(), dstTyp.Kind(); {
 
 		case sk == reflect.Struct && dk == reflect.Struct:
