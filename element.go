@@ -42,19 +42,33 @@ func newElemConverter(dt, st reflect.Type) (e *elemConverter, ok bool) {
 	return
 }
 
+// convert accepts non-nil dPtr and sPtr pointer,
+// it is assured by structConverter, sliceConverter and mapConverter
 func (e *elemConverter) convert(dPtr, sPtr unsafe.Pointer) {
-	for d := 0; d < e.sReferDeep && sPtr != nil; d++ {
+	for d := 0; d < e.sReferDeep; d++ {
 		sPtr = unsafe.Pointer(*((**int)(sPtr)))
+		if sPtr == nil {
+			sPtr = e.sEmptyDereferValPtr
+			break
+		}
 	}
 
-	if sPtr == nil {
-		sPtr = e.sEmptyDereferValPtr
+	deep := 0
+	oldPtr := dPtr
+	for ; deep < e.dReferDeep && dPtr != nil; deep++ {
+		oldPtr = dPtr
+		dPtr = unsafe.Pointer(*((**int)(dPtr)))
+	}
+	// if dPtr is nil, for loop above must have executed at least once
+	if dPtr == nil {
+		dPtr = oldPtr
+		deep--
 	}
 
-	if e.dReferDeep > 0 {
+	if deep := e.dReferDeep - deep; deep > 0 {
 		v := newValuePtr(e.dDereferTyp)
 		e.converter.convert(v, sPtr)
-		for d := 0; d < e.dReferDeep; d++ {
+		for d := 0; d < deep; d++ {
 			tmp := v
 			v = unsafe.Pointer(&tmp)
 		}
