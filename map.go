@@ -38,7 +38,7 @@ func newMapConverter(convertType *convertType) (m converter) {
 	return
 }
 
-// convert only affects target with keys that source map has, the rest will remain unchanged.
+// convert only affects destination map with keys that source map has, the rest will remain unchanged.
 // dPtr and sPtr must pointed to a non-pointer value,
 // it is assured by Converter.Convert() and elemConverter.convert()
 func (m *mapConverter) convert(dPtr, sPtr unsafe.Pointer) {

@@ -22,7 +22,7 @@ func newBasicConverter(convertType *convertType) (c converter) {
 	return
 }
 
-// convert assigns converted source value to target.
+// convert assigns converted source value to destination.
 // dPtr and sPtr must pointed to a non-pointer value,
 // it is assured by Converter.Convert() and elemConverter.convert()
 func (g *basicConverter) convert(dPtr, sPtr unsafe.Pointer) {

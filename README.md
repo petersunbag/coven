@@ -5,9 +5,9 @@
 
 Support struct-to-struct, slice-to-slice and map-to-map converting.  
 This package is inspired by https://github.com/thrift-iterator/go
-* struct converting only affects target fields of the same name with source fields, the rest will remain unchanged.nested anonymous fields are supported.
-* map converting only affects target with keys that source map has, the rest will remain unchanged.
-* slice converting will overwrite the whole target slice.
+* struct converting only affects destination fields of the same name with source fields, the rest will remain unchanged.nested anonymous fields are supported.
+* map converting only affects destination map with keys that source map has, the rest will remain unchanged.
+* slice converting will overwrite the whole destination slice.
 * type with nested pointers is supported.
 * except for map converting, use unsafe.pointer instead of reflect.Value to convert.
 ## Install ##

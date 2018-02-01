@@ -35,11 +35,11 @@ type Converter struct {
 func (d *Converter) Convert(dst, src interface{}) {
 	dv := dereferencedValue(dst)
 	if !dv.CanSet() {
-		panic(fmt.Sprintf("target should be a pointer. [actual:%v]", dv.Type()))
+		panic(fmt.Sprintf("destination should be a pointer. [actual:%v]", dv.Type()))
 	}
 
 	if dv.Type() != d.dstTyp {
-		panic(fmt.Sprintf("invalid target type. [expected:%v] [actual:%v]", d.dstTyp, dv.Type()))
+		panic(fmt.Sprintf("invalid destination type. [expected:%v] [actual:%v]", d.dstTyp, dv.Type()))
 	}
 
 	sv := dereferencedValue(src)
@@ -59,7 +59,7 @@ func NewConverter(dst, src interface{}) *Converter {
 	srcTyp := reflect.TypeOf(src)
 
 	if c := newConverter(dstTyp, srcTyp, true); c == nil {
-		panic(fmt.Sprintf("can't convert source type %s to target type %s", srcTyp, dstTyp))
+		panic(fmt.Sprintf("can't convert source type %s to destination type %s", srcTyp, dstTyp))
 	} else {
 		return c
 	}
