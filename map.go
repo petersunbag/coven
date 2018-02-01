@@ -44,11 +44,13 @@ func newMapConverter(convertType *convertType) (m converter) {
 func (m *mapConverter) convert(dPtr, sPtr unsafe.Pointer) {
 	sv := ptrToMapValue(m.sEmptyMapInterface, sPtr)
 	dv := ptrToMapValue(m.dEmptyMapInterface, dPtr)
+
+	keys := sv.MapKeys()
 	if dv.IsNil() {
-		dv.Set(reflect.MakeMap(m.dstTyp))
+		dv.Set(reflect.MakeMapWithSize(m.dstTyp, len(keys)))
 	}
 
-	for _, sKey := range sv.MapKeys() {
+	for _, sKey := range keys {
 		sValPtr := valuePtr(sv.MapIndex(sKey))
 		sKeyPtr := valuePtr(sKey)
 		dKey := reflect.New(m.dKeyTyp).Elem()
