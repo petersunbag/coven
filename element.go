@@ -54,15 +54,13 @@ func (e *elemConverter) convert(dPtr, sPtr unsafe.Pointer) {
 	}
 
 	deep := 0
-	oldPtr := dPtr
-	for ; deep < e.dReferDeep && dPtr != nil; deep++ {
-		oldPtr = dPtr
+	for ; deep < e.dReferDeep; deep++ {
+		oldPtr := dPtr
 		dPtr = unsafe.Pointer(*((**int)(dPtr)))
-	}
-	// if dPtr is nil, for loop above must have executed at least once
-	if dPtr == nil {
-		dPtr = oldPtr
-		deep--
+		if dPtr == nil {
+			dPtr = oldPtr
+			break
+		}
 	}
 
 	if deep := e.dReferDeep - deep; deep > 0 {
