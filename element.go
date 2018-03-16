@@ -48,6 +48,10 @@ func (e *elemConverter) convert(dPtr, sPtr unsafe.Pointer) {
 	for d := 0; d < e.sReferDeep; d++ {
 		sPtr = unsafe.Pointer(*((**int)(sPtr)))
 		if sPtr == nil {
+			if e.dReferDeep > 0 {
+				*(**int)(dPtr) = nil
+				return
+			}
 			sPtr = e.sEmptyDereferValPtr
 			break
 		}

@@ -59,7 +59,7 @@ func TestSimpleConvert(t *testing.T) {
 
 	foo2 := Foo{1, "a", nil, nil, nil, 5, true}
 	c.convert(unsafe.Pointer(dereferencedValue(&bar).UnsafeAddr()), unsafe.Pointer(dereferencedValue(&foo2).UnsafeAddr()))
-	if expected := `{"A":1,"B":"a","C":"","D":0,"E":[],"G":0}`; expected != jsonEncode(bar) {
+	if expected := `{"A":1,"B":"a","C":"","D":null,"E":[],"G":0}`; expected != jsonEncode(bar) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(bar))
 	}
 }

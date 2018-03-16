@@ -33,22 +33,26 @@ type Converter struct {
 }
 
 func (d *Converter) Convert(dst, src interface{}) {
+	if dst == nil || src == nil || reflect.ValueOf(dst).IsNil() || reflect.ValueOf(src).IsNil() {
+		return
+	}
+
 	dv := dereferencedValue(dst)
 	if !dv.CanSet() {
-		panic(fmt.Sprintf("destination should be a pointer. [actual:%v]", dv.Type()))
+		panic(fmt.Sprintf("[coven]destination should be a pointer. [actual:%v]", dv.Type()))
 	}
 
 	if dv.Type() != d.dstTyp {
-		panic(fmt.Sprintf("invalid destination type. [expected:%v] [actual:%v]", d.dstTyp, dv.Type()))
+		panic(fmt.Sprintf("[coven]invalid destination type. [expected:%v] [actual:%v]", d.dstTyp, dv.Type()))
 	}
 
 	sv := dereferencedValue(src)
 	if !sv.CanAddr() {
-		panic(fmt.Sprintf("source should be a pointer. [actual:%v]", dv.Type()))
+		panic(fmt.Sprintf("[coven]source should be a pointer. [actual:%v]", sv.Type()))
 	}
 
 	if sv.Type() != d.srcTyp {
-		panic(fmt.Sprintf("invalid source type. [expected:%v] [actual:%v]", d.srcTyp, sv.Type()))
+		panic(fmt.Sprintf("[coven]invalid source type. [expected:%v] [actual:%v]", d.srcTyp, sv.Type()))
 	}
 
 	d.converter.convert(unsafe.Pointer(dv.UnsafeAddr()), unsafe.Pointer(sv.UnsafeAddr()))
