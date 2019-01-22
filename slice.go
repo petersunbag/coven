@@ -38,7 +38,7 @@ func (s *sliceConverter) convert(dPtr, sPtr unsafe.Pointer) {
 	length := sSlice.Len
 	dSlice.Len = length
 
-	if dSlice.Cap < length {
+	if dSlice.Cap < length || dSlice.Data == nil {
 		newVal := reflect.MakeSlice(s.dstTyp, 0, length)
 		dSlice.Data = unsafe.Pointer(newVal.Pointer())
 		dSlice.Cap = length
