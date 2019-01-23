@@ -32,6 +32,7 @@ func TestDelegateConverter_Convert(t *testing.T) {
 		B map[int64][]byte
 		C byte
 		foobar
+		E []int
 	}
 
 	type Bar struct {
@@ -39,16 +40,17 @@ func TestDelegateConverter_Convert(t *testing.T) {
 		B map[string]*string
 		C *byte
 		D int64
+		E []int
 	}
 
 	c := NewConverter(Bar{}, Foo{})
 
-	foo := Foo{[]int{1, 2, 3}, map[int64][]byte{1: []byte{'a', 'b'}, 2: []byte{'b', 'a'}, 3: []byte{'c', 'd'}}, 6, foobar{11}}
+	foo := Foo{[]int{1, 2, 3}, map[int64][]byte{1: []byte{'a', 'b'}, 2: []byte{'b', 'a'}, 3: []byte{'c', 'd'}}, 6, foobar{11}, []int{}}
 	bar := Bar{}
 	c.Convert(&bar, &foo)
 	c.Convert(&bar, nil)
 
-	if expected := `{"A":[1,2,3],"B":{"1":"ab","2":"ba","3":"cd"},"C":6,"D":11}`; !reflect.DeepEqual(expected, jsonEncode(bar)) {
+	if expected := `{"A":[1,2,3],"B":{"1":"ab","2":"ba","3":"cd"},"C":6,"D":11,"E":[]}`; !reflect.DeepEqual(expected, jsonEncode(bar)) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(bar))
 	}
 
