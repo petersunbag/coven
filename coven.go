@@ -1,6 +1,7 @@
 package coven
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"sync"
@@ -32,40 +33,41 @@ type Converter struct {
 	converter
 }
 
-func (d *Converter) Convert(dst, src interface{}) {
+func (d *Converter) Convert(dst, src interface{}) error {
 	if dst == nil || src == nil || reflect.ValueOf(dst).IsNil() || reflect.ValueOf(src).IsNil() {
-		return
+		return nil
 	}
 
 	dv := dereferencedValue(dst)
 	if !dv.CanSet() {
-		panic(fmt.Sprintf("[coven]destination should be a pointer. [actual:%v]", dv.Type()))
+		return errors.New(fmt.Sprintf("[coven]destination should be a pointer. [actual:%v]", dv.Type()))
 	}
 
 	if dv.Type() != d.dstTyp {
-		panic(fmt.Sprintf("[coven]invalid destination type. [expected:%v] [actual:%v]", d.dstTyp, dv.Type()))
+		return errors.New(fmt.Sprintf("[coven]invalid destination type. [expected:%v] [actual:%v]", d.dstTyp, dv.Type()))
 	}
 
 	sv := dereferencedValue(src)
 	if !sv.CanAddr() {
-		panic(fmt.Sprintf("[coven]source should be a pointer. [actual:%v]", sv.Type()))
+		return errors.New(fmt.Sprintf("[coven]source should be a pointer. [actual:%v]", sv.Type()))
 	}
 
 	if sv.Type() != d.srcTyp {
-		panic(fmt.Sprintf("[coven]invalid source type. [expected:%v] [actual:%v]", d.srcTyp, sv.Type()))
+		return errors.New(fmt.Sprintf("[coven]invalid source type. [expected:%v] [actual:%v]", d.srcTyp, sv.Type()))
 	}
 
 	d.converter.convert(unsafe.Pointer(dv.UnsafeAddr()), unsafe.Pointer(sv.UnsafeAddr()))
+	return nil
 }
 
-func NewConverter(dst, src interface{}) *Converter {
+func NewConverter(dst, src interface{}) (*Converter, error) {
 	dstTyp := reflect.TypeOf(dst)
 	srcTyp := reflect.TypeOf(src)
 
 	if c := newConverter(dstTyp, srcTyp, true); c == nil {
-		panic(fmt.Sprintf("can't convert source type %s to destination type %s", srcTyp, dstTyp))
+		return nil, errors.New(fmt.Sprintf("can't convert source type %s to destination type %s", srcTyp, dstTyp))
 	} else {
-		return c
+		return c, nil
 	}
 }
 
