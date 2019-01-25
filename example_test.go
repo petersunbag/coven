@@ -23,11 +23,17 @@ func ExampleConverter_Convert() {
 		D int64
 	}
 
-	var c = NewConverter(Bar{}, Foo{})
+	var c, err = NewConverter(Bar{}, Foo{})
+	if err != nil {
+		panic(err)
+	}
 
 	foo := Foo{[]int{1, 2, 3}, map[int64][]byte{1: []byte{'a', 'b'}, 2: []byte{'b', 'a'}, 3: []byte{'c', 'd'}}, 6, foobar{11}}
 	bar := Bar{}
-	c.Convert(&bar, &foo)
+	err = c.Convert(&bar, &foo)
+	if err != nil {
+		panic(err)
+	}
 	bytes, _ := json.Marshal(bar)
 	fmt.Println(string(bytes))
 

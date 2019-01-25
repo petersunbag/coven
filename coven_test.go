@@ -15,8 +15,14 @@ func TestCache(t *testing.T) {
 		A int
 	}
 
-	_ = NewConverter(new(foo), new(bar))
-	_ = NewConverter(new(foo), new(bar))
+	_, err := NewConverter(new(foo), new(bar))
+	if err != nil {
+		panic(err)
+	}
+	_, err = NewConverter(new(foo), new(bar))
+	if err != nil {
+		panic(err)
+	}
 
 	if len(createdConverters) != 2 {
 		t.Fatalf("cache fail")
@@ -43,12 +49,21 @@ func TestDelegateConverter_Convert(t *testing.T) {
 		E []int
 	}
 
-	c := NewConverter(Bar{}, Foo{})
+	c, err := NewConverter(Bar{}, Foo{})
+	if err != nil {
+		panic(err)
+	}
 
 	foo := Foo{[]int{1, 2, 3}, map[int64][]byte{1: []byte{'a', 'b'}, 2: []byte{'b', 'a'}, 3: []byte{'c', 'd'}}, 6, foobar{11}, []int{}}
 	bar := Bar{}
-	c.Convert(&bar, &foo)
-	c.Convert(&bar, nil)
+	err = c.Convert(&bar, &foo)
+	if err != nil {
+		panic(err)
+	}
+	err = c.Convert(&bar, nil)
+	if err != nil {
+		panic(err)
+	}
 
 	if expected := `{"A":[1,2,3],"B":{"1":"ab","2":"ba","3":"cd"},"C":6,"D":11,"E":[]}`; !reflect.DeepEqual(expected, jsonEncode(bar)) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(bar))
