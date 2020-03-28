@@ -15,7 +15,7 @@ func TestSliceConverter_Convert(t *testing.T) {
 		A *int
 	}
 
-	c := newSliceConverter(&convertType{reflect.TypeOf([]bar{}), reflect.TypeOf([]foo{})})
+	c := newSliceConverter(&convertType{reflect.TypeOf([]bar{}), reflect.TypeOf([]foo{}), nil})
 
 	s := []foo{foo{1}, foo{2}, foo{3}}
 
@@ -31,7 +31,7 @@ func TestSliceConverter_Convert(t *testing.T) {
 	a := []int{1, 2, 3}
 	b := []*byte{}
 
-	c = newSliceConverter(&convertType{reflect.TypeOf([]*byte{}), reflect.TypeOf([]int{})})
+	c = newSliceConverter(&convertType{reflect.TypeOf([]*byte{}), reflect.TypeOf([]int{}), nil})
 	c.convert(unsafe.Pointer(&b), unsafe.Pointer(&a))
 	if expected := `[1,2,3]`; !reflect.DeepEqual(expected, jsonEncode(b)) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, jsonEncode(b))
@@ -42,10 +42,22 @@ func TestSameSliceConvert(t *testing.T) {
 	a := []int{1, 2, 3}
 	b := []int{4}
 
-	c := newSliceConverter(&convertType{reflect.TypeOf([]int{}), reflect.TypeOf([]int{})})
+	c := newSliceConverter(&convertType{reflect.TypeOf([]int{}), reflect.TypeOf([]int{}), nil})
 
 	c.convert(unsafe.Pointer(&b), unsafe.Pointer(&a))
 	if expected := []int{1, 2, 3}; !reflect.DeepEqual(expected, b) {
 		t.Fatalf("[expected:%v] [actual:%v]", expected, b)
 	}
+}
+
+func TestOptionSliceStructConvert(t *testing.T) {
+	type Foo struct {
+		A  string
+		B1 string
+	}
+	type Bar struct {
+		A string
+		B string
+	}
+
 }

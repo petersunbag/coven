@@ -16,6 +16,7 @@ var (
 type convertType struct {
 	dstTyp reflect.Type
 	srcTyp reflect.Type
+	option *structOption
 }
 
 // converter can handle converting among convertible basic types,
@@ -64,14 +65,25 @@ func NewConverter(dst, src interface{}) (*Converter, error) {
 	dstTyp := reflect.TypeOf(dst)
 	srcTyp := reflect.TypeOf(src)
 
-	if c := newConverter(dstTyp, srcTyp, true); c == nil {
+	if c := newConverter(dstTyp, srcTyp, nil, true); c == nil {
 		return nil, errors.New(fmt.Sprintf("can't convert source type %s to destination type %s", srcTyp, dstTyp))
 	} else {
 		return c, nil
 	}
 }
 
-func newConverter(dstTyp, srcTyp reflect.Type, lock bool) *Converter {
+func NewConverterOption(dst, src interface{}, option *StructOption) (*Converter, error) {
+	dstTyp := reflect.TypeOf(dst)
+	srcTyp := reflect.TypeOf(src)
+
+	if c := newConverter(dstTyp, srcTyp, option.convert(), true); c == nil {
+		return nil, errors.New(fmt.Sprintf("can't convert source type %s to destination type %s", srcTyp, dstTyp))
+	} else {
+		return c, nil
+	}
+}
+
+func newConverter(dstTyp, srcTyp reflect.Type, option *structOption, lock bool) *Converter {
 	if lock {
 		createdConvertersMu.Lock()
 		defer createdConvertersMu.Unlock()
@@ -80,7 +92,7 @@ func newConverter(dstTyp, srcTyp reflect.Type, lock bool) *Converter {
 	dstTyp = dereferencedType(dstTyp)
 	srcTyp = dereferencedType(srcTyp)
 
-	cTyp := &convertType{dstTyp, srcTyp}
+	cTyp := &convertType{dstTyp, srcTyp, option}
 	if dc, ok := createdConverters[*cTyp]; ok {
 		return dc
 	}

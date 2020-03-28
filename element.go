@@ -19,7 +19,7 @@ type elemConverter struct {
 	converter           converter
 }
 
-func newElemConverter(dt, st reflect.Type) (e *elemConverter, ok bool) {
+func newElemConverter(dt, st reflect.Type, option *structOption) (e *elemConverter, ok bool) {
 	e = &elemConverter{
 		sTyp:        st,
 		dTyp:        dt,
@@ -33,7 +33,7 @@ func newElemConverter(dt, st reflect.Type) (e *elemConverter, ok bool) {
 	e.sDereferTyp, e.sReferDeep = referDeep(e.sDereferTyp)
 	e.dDereferTyp, e.dReferDeep = referDeep(e.dDereferTyp)
 
-	if converter := newConverter(e.dDereferTyp, e.sDereferTyp, false); converter != nil {
+	if converter := newConverter(e.dDereferTyp, e.sDereferTyp, option, false); converter != nil {
 		e.converter = converter
 		e.sEmptyDereferValPtr = newValuePtr(e.sDereferTyp)
 		ok = true

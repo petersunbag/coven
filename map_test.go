@@ -7,7 +7,7 @@ import (
 )
 
 func TestMapConverter_Convert(t *testing.T) {
-	c := newMapConverter(&convertType{reflect.TypeOf(map[string]*string{}), reflect.TypeOf(map[int]int{})})
+	c := newMapConverter(&convertType{reflect.TypeOf(map[string]*string{}), reflect.TypeOf(map[int]int{}), nil})
 	n := map[int]int{1: 1, 2: 2, 3: 3}
 	m := map[string]*string{}
 	c.convert(unsafe.Pointer(&m), unsafe.Pointer(&n))

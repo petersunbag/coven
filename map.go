@@ -20,8 +20,8 @@ func newMapConverter(convertType *convertType) (m converter) {
 	dKeyTyp := convertType.dstTyp.Key()
 	sValTyp := convertType.srcTyp.Elem()
 	dValTyp := convertType.dstTyp.Elem()
-	if keyConverter, ok := newElemConverter(dKeyTyp, sKeyTyp); ok {
-		if valueConverter, ok := newElemConverter(dValTyp, sValTyp); ok {
+	if keyConverter, ok := newElemConverter(dKeyTyp, sKeyTyp, convertType.option); ok {
+		if valueConverter, ok := newElemConverter(dValTyp, sValTyp, convertType.option); ok {
 			sEmpty := reflect.New(convertType.srcTyp).Interface()
 			dEmpty := reflect.New(convertType.dstTyp).Interface()
 			m = &mapConverter{

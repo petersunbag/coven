@@ -71,6 +71,87 @@ func TestDelegateConverter_Convert(t *testing.T) {
 
 }
 
+func TestNewConverterOption(t *testing.T) {
+	type Foo struct {
+		A  string
+		B1 string
+	}
+	type Bar struct {
+		A string
+		B string
+	}
+
+	type FooBar struct {
+		D Foo
+		C string
+	}
+
+	type BarFoo struct {
+		D Bar
+		C string
+	}
+
+	fooBar := FooBar{
+		D: Foo{
+			A:  "a",
+			B1: "b",
+		},
+		C: "c",
+	}
+
+	option := &StructOption{
+		BannedFields: []string{"C"},
+		AliasFields:  map[string]string{"D.B": "B1"},
+	}
+
+	c, err := NewConverterOption(BarFoo{}, FooBar{}, option)
+	if err != nil {
+		panic(err)
+	}
+	var barFoo BarFoo
+	if err = c.Convert(&barFoo, &fooBar); err != nil {
+		panic(err)
+	}
+	expected := BarFoo{
+		D: Bar{
+			A: "a",
+			B: "b",
+		},
+	}
+	if expected != barFoo {
+		t.Fatalf("[expected:%v] [actual:%v]", expected, barFoo)
+	}
+
+	c, err = NewConverterOption([]BarFoo{}, []FooBar{}, option)
+	if err != nil {
+		panic(err)
+	}
+	a := []FooBar{fooBar}
+	b := make([]BarFoo, 0)
+	if err = c.Convert(&b, &a); err != nil {
+		panic(err)
+	}
+	expected1 := []BarFoo{expected}
+	if !reflect.DeepEqual(expected1, b) {
+		t.Fatalf("[expected:%v] [actual:%v]", expected1, b)
+	}
+
+	c, err = NewConverterOption(map[int]BarFoo{}, map[int]FooBar{}, option)
+	if err != nil {
+		panic(err)
+	}
+	m := map[int]FooBar{1: fooBar}
+	n := make(map[int]BarFoo)
+	if err = c.Convert(&n, &m); err != nil {
+		panic(err)
+	}
+	expected2 := map[int]BarFoo{1: expected}
+	if !reflect.DeepEqual(expected2, n) {
+		t.Fatalf("[expected:%v] [actual:%v]", expected2, n)
+
+	}
+}
+
 func jsonEncode(s interface{}) string {
 	bytes, _ := json.Marshal(s)
 	return string(bytes)

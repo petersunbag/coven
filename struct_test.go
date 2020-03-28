@@ -15,7 +15,7 @@ func TestSameStructConvert(t *testing.T) {
 	dstTyp := dereferencedType(reflect.TypeOf(new(foo)))
 	srcTyp := dereferencedType(reflect.TypeOf(new(foo)))
 
-	c := newStructConverter(&convertType{dstTyp, srcTyp})
+	c := newStructConverter(&convertType{dstTyp, srcTyp, nil})
 	foo1 := &foo{1, 2}
 	foo2 := foo{}
 	c.convert(unsafe.Pointer(dereferencedValue(&foo2).UnsafeAddr()), unsafe.Pointer(dereferencedValue(&foo1).UnsafeAddr()))
@@ -43,7 +43,7 @@ func TestSimpleConvert(t *testing.T) {
 		G int
 	}
 
-	c := newStructConverter(&convertType{reflect.TypeOf(Bar{}), reflect.TypeOf(Foo{})})
+	c := newStructConverter(&convertType{reflect.TypeOf(Bar{}), reflect.TypeOf(Foo{}), nil})
 
 	s := "b"
 	i := 2
@@ -88,8 +88,8 @@ func TestNestedConvert(t *testing.T) {
 		Foo Bar
 	}
 
-	c1 := newStructConverter(&convertType{reflect.TypeOf(BarFoo{}), reflect.TypeOf(FooBar{})})
-	c2 := newStructConverter(&convertType{reflect.TypeOf(FooBar{}), reflect.TypeOf(BarFoo{})})
+	c1 := newStructConverter(&convertType{reflect.TypeOf(BarFoo{}), reflect.TypeOf(FooBar{}), nil})
+	c2 := newStructConverter(&convertType{reflect.TypeOf(FooBar{}), reflect.TypeOf(BarFoo{}), nil})
 
 	barFoo := BarFoo{}
 

@@ -21,7 +21,7 @@ func newSliceConverter(convertType *convertType) (s converter) {
 	}
 	if convertType.srcTyp == convertType.dstTyp {
 		s = c
-	} else if elemConverter, ok := newElemConverter(convertType.dstTyp.Elem(), convertType.srcTyp.Elem()); ok {
+	} else if elemConverter, ok := newElemConverter(convertType.dstTyp.Elem(), convertType.srcTyp.Elem(), convertType.option); ok {
 		c.elemConverter = elemConverter
 		s = c
 	}

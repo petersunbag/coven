@@ -25,10 +25,19 @@ func newStructConverter(convertType *convertType) (s converter) {
 	}
 	_, sFields := extractFields(convertType.srcTyp, 0)
 	dFieldIndex, _ := extractFields(convertType.dstTyp, 0)
+	if convertType.option != nil {
+		dFieldIndex = filterField(dFieldIndex, convertType.option.BannedFields)
+		dFieldIndex = aliasField(dFieldIndex, convertType.option.AliasFields)
+	}
 	fieldConverters := make([]*fieldConverter, 0, len(dFieldIndex))
+
 	for _, df := range dFieldIndex {
 		if sf, ok := sFields[df.Name]; ok {
-			if fieldConverter := newFieldConverter(*df, *sf); fieldConverter != nil {
+			var nestOption *structOption = nil
+			if convertType.option != nil && convertType.option.NestedOption != nil {
+				nestOption = convertType.option.NestedOption[df.Name]
+			}
+			if fieldConverter := newFieldConverter(*df, *sf, nestOption); fieldConverter != nil {
 				fieldConverters = append(fieldConverters, fieldConverter)
 			}
 		}
@@ -42,6 +51,35 @@ func newStructConverter(convertType *convertType) (s converter) {
 	}
 
 	return
+}
+
+func filterField(fields []*reflect.StructField, bannedFields map[string]struct{}) []*reflect.StructField {
+	if bannedFields == nil {
+		return fields
+	}
+
+	filtered := make([]*reflect.StructField, 0, len(fields))
+	for _, f := range fields {
+		if _, ok := bannedFields[f.Name]; ok {
+			continue
+		} else {
+			filtered = append(filtered, f)
+		}
+	}
+	return filtered
+}
+
+func aliasField(fields []*reflect.StructField, aliasFields map[string]string) []*reflect.StructField {
+	if aliasFields == nil {
+		return fields
+	}
+
+	for _, f := range fields {
+		if alias, ok := aliasFields[f.Name]; ok {
+			f.Name = alias
+		}
+	}
+	return fields
 }
 
 // convert only affects fields stored in fieldConverters, the rest will remain unchanged.
@@ -68,8 +106,8 @@ type fieldConverter struct {
 	dName   string
 }
 
-func newFieldConverter(df, sf reflect.StructField) (f *fieldConverter) {
-	if elemConverter, ok := newElemConverter(df.Type, sf.Type); ok {
+func newFieldConverter(df, sf reflect.StructField, option *structOption) (f *fieldConverter) {
+	if elemConverter, ok := newElemConverter(df.Type, sf.Type, option); ok {
 		return &fieldConverter{
 			elemConverter: elemConverter,
 			sOffset:       sf.Offset,
