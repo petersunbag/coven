@@ -2,11 +2,17 @@ package coven
 
 import "strings"
 
+// StructOption describe options in converting struct.
+// BannedFields lists fields that are not allowed to be converted in dst struct.
+// AliasFields lists fields that are supposed to use alias field-name in dst struct when converting.
+// Both BannedFields and AliasFields support nested fields.
+// For example, `A.B` in BannedFields or key of AliasFields means `A` field in dst struct is a struct, and the option is applied to `B` field in `A`.
 type StructOption struct {
 	BannedFields []string
 	AliasFields  map[string]string
 }
 
+// convert StructOption to structOption, and call structOption.parse()
 func (o *StructOption) convert() *structOption {
 	var oo structOption
 	if o.BannedFields != nil {
@@ -25,12 +31,14 @@ func (o *StructOption) convert() *structOption {
 	return &oo
 }
 
+// structOption is an inner use version of StructOption, which use NestedOption to represent nested options.
 type structOption struct {
 	BannedFields map[string]struct{}
 	AliasFields  map[string]string
 	NestedOption map[string]*structOption
 }
 
+// parse can translate nested option represented by string such as `A.B` into NestedOption.
 func (o *structOption) parse() {
 	o.NestedOption = make(map[string]*structOption)
 
